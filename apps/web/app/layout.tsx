@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 
 import { AUTH_TOKEN_COOKIE } from "../lib/api";
+import { BrandMark } from "../components/brand-mark";
 import { ShellActions } from "../components/shell-actions";
 
 export const metadata: Metadata = {
@@ -22,10 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="bg-mist text-ink antialiased">
         <div className="page-shell pb-0 pt-5">
           <div className="mb-4 flex flex-col gap-4 rounded-full border border-white/60 bg-white/70 px-5 py-3 backdrop-blur md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-[0.3em] text-teal">Intern Radar</div>
-              <div className="text-sm text-slate">Production-ready opportunity discovery and tracking baseline</div>
-            </div>
+            <BrandMark compact />
             <ShellActions
               initialTheme={theme}
               initialAuthenticated={isAuthenticated}

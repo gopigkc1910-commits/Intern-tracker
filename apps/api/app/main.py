@@ -7,7 +7,7 @@ from app.config import settings
 from app.db import SessionLocal
 from app.services import configure_storage_mode, create_schema_and_seed
 
-from app.routers import admin, ai, applications, auth, community, notifications, opportunities, profile
+from app.routers import admin, ai, applications, auth, community, feedback, notifications, opportunities, profile
 
 
 @asynccontextmanager
@@ -54,6 +54,7 @@ app.include_router(applications.router, prefix="/api/v1")
 app.include_router(ai.router, prefix="/api/v1")
 app.include_router(community.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
+app.include_router(feedback.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 
 

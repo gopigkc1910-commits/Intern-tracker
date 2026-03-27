@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { listOpportunities } from "../../lib/api";
+import { getServerAuthToken } from "../../lib/session";
 import type { OpportunitySummary } from "../../lib/types";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,8 @@ function deadlineLabel(value: string | null) {
 
 export default async function OpportunitiesPage({ searchParams }: OpportunitiesPageProps) {
   const currentFilters = searchParams ?? {};
+  const token = await getServerAuthToken();
+  const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
   let items: OpportunitySummary[] = [];
   let error = false;
 
@@ -31,7 +35,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   }
 
   return (
-    <main className="page-shell">
+    <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
       <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
         <AppHeader
           eyebrow="Opportunity Feed"
@@ -132,6 +136,6 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
           </>
         )}
       </section>
-    </main>
+    </AppSidebarShell>
   );
 }

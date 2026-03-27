@@ -85,7 +85,19 @@ create table if not exists applications (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists feedback_submissions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete set null,
+  category varchar(50) not null,
+  message text not null,
+  name varchar(255),
+  email varchar(255),
+  status varchar(30) not null default 'new',
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_opportunities_type on opportunities(type);
 create index if not exists idx_opportunities_domain on opportunities(domain);
 create index if not exists idx_opportunities_deadline on opportunities(deadline_at);
 create index if not exists idx_applications_user on applications(user_id);
+create index if not exists idx_feedback_created_at on feedback_submissions(created_at);

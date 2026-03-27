@@ -5,8 +5,14 @@ from fastapi import APIRouter, Depends
 from app.demo_store import DEMO_STORE
 from app.db import get_db
 from app.deps import require_admin
-from app.models import Application, Opportunity, User
-from app.schemas import AdminUserSummary, AdminUsersResponse, AnalyticsOverviewResponse
+from app.models import Application, FeedbackSubmission, Opportunity, User
+from app.schemas import (
+    AdminFeedbackItem,
+    AdminFeedbackResponse,
+    AdminUserSummary,
+    AdminUsersResponse,
+    AnalyticsOverviewResponse,
+)
 from app.services import use_demo_store
 
 router = APIRouter(tags=["admin"])
@@ -58,3 +64,33 @@ def list_users(_: None = Depends(require_admin), db: Session = Depends(get_db)) 
         )
 
     return AdminUsersResponse(items=items)
+
+
+@router.get("/admin/feedback", response_model=AdminFeedbackResponse)
+def list_feedback(_: None = Depends(require_admin), db: Session = Depends(get_db)) -> AdminFeedbackResponse:
+    if use_demo_store():
+        return AdminFeedbackResponse(items=DEMO_STORE.list_feedback())
+
+    feedback_items = (
+        db.query(FeedbackSubmission)
+        .options(joinedload(FeedbackSubmission.user))
+        .order_by(FeedbackSubmission.created_at.desc())
+        .all()
+    )
+
+    return AdminFeedbackResponse(
+        items=[
+            AdminFeedbackItem(
+                id=item.id,
+                category=item.category,
+                message=item.message,
+                name=item.name,
+                email=item.email,
+                status=item.status,
+                created_at=item.created_at,
+                user_id=item.user_id,
+                user_name=item.user.full_name if item.user else None,
+            )
+            for item in feedback_items
+        ]
+    )

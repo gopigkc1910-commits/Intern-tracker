@@ -52,6 +52,36 @@ def get_current_user(
     return session.user
 
 
+def get_optional_current_user(
+    authorization: str | None = Header(default=None),
+    x_demo_token: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> User | None:
+    token = extract_bearer_token(authorization, x_demo_token)
+
+    if use_demo_store():
+        if token == settings.demo_token:
+            return DEMO_STORE.user  # type: ignore[return-value]
+        return None
+
+    if not token:
+        return None
+
+    session = db.scalar(
+        select(AuthSession)
+        .join(AuthSession.user)
+        .where(
+            AuthSession.token == token,
+            AuthSession.revoked_at.is_(None),
+            AuthSession.expires_at > datetime.now(UTC),
+        )
+    )
+    if session is None:
+        return None
+
+    return session.user
+
+
 def require_admin(x_admin_token: str | None = Header(default=None)) -> None:
     if not settings.admin_token:
         raise HTTPException(

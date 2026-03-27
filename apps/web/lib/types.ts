@@ -111,3 +111,18 @@ export type AdminUserSummary = {
   created_at: string;
   updated_at: string | null;
 };
+
+export type FeedbackSubmission = {
+  id: string;
+  category: string;
+  message: string;
+  name: string | null;
+  email: string | null;
+  status: string;
+  created_at: string;
+};
+
+export type AdminFeedbackItem = FeedbackSubmission & {
+  user_id: string | null;
+  user_name: string | null;
+};

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { AuthEntryPanel } from "../../components/auth-entry-panel";
 import { ProfileForm } from "../../components/profile-form";
@@ -52,8 +53,10 @@ export default async function ProfilePage() {
     );
   }
 
+  const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
+
   return (
-    <main className="page-shell">
+    <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
       <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
         <AppHeader
           eyebrow="Profile"
@@ -66,6 +69,6 @@ export default async function ProfilePage() {
           <ProfileForm profile={profile} />
         </div>
       </section>
-    </main>
+    </AppSidebarShell>
   );
 }

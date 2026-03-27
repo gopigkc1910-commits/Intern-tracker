@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { ApplicationStatusBoardPolished } from "../../components/application-status-board-polished";
 import { AuthEntryPanel } from "../../components/auth-entry-panel";
@@ -84,9 +85,10 @@ export default async function DashboardPage() {
 
   const savedCount = applications.filter((item) => item.status === "saved").length;
   const activeCount = applications.filter((item) => item.status !== "rejected").length;
+  const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
 
   return (
-    <main className="page-shell">
+    <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
       <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
         <AppHeader
           eyebrow="Dashboard"
@@ -172,6 +174,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
-    </main>
+    </AppSidebarShell>
   );
 }

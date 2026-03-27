@@ -26,6 +26,13 @@ Open:
 
 - `/admin`
 
+If the deployed site shows `404 Not Found` for `/admin`:
+
+- confirm the latest commit with `apps/web/app/admin/page.tsx` is deployed to the Render web service
+- trigger a fresh deploy for `intern-tracker-web`
+- if environment variables changed, redeploy both `intern-tracker-web` and `intern-tracker-api`
+- verify the web service is still using `apps/web` as `rootDir`
+
 This page shows:
 
 - active users

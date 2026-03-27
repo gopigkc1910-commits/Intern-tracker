@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandMark } from "../components/brand-mark";
 import { AuthEntryPanel } from "../components/auth-entry-panel";
 import { listOpportunities } from "../lib/api";
 import type { OpportunitySummary } from "../lib/types";
@@ -27,17 +28,14 @@ export default async function HomePage() {
     <main className="page-shell">
       <section className="glass-panel soft-grid overflow-hidden rounded-[36px] p-6 shadow-glow md:p-10">
         <nav className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="section-heading">Intern Radar</p>
-            <p className="mt-2 text-sm text-slate">
-              Student opportunity finder, tracker, and career workflow for modern internship searches
-            </p>
-          </div>
+          <BrandMark />
           <div className="pill-nav flex-wrap text-sm text-slate">
             <Link href="/opportunities">Explore</Link>
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/profile">Profile</Link>
             <Link href="/opportunities?type=hackathon">Hackathons</Link>
+            <Link href="/feedback">Feedback</Link>
+            <Link href="/help">Help</Link>
           </div>
         </nav>
 

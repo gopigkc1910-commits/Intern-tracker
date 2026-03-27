@@ -7,9 +7,11 @@ from uuid import UUID, uuid4
 
 from app.config import settings
 from app.schemas import (
+    AdminFeedbackItem,
     AnalyticsOverviewResponse,
     ApplicationRecord,
     CoverLetterResponse,
+    FeedbackSubmissionResponse,
     NotificationItem,
     OpportunityDetail,
     OpportunitySummary,
@@ -270,6 +272,7 @@ class DemoStore:
                 opportunity=self.to_summary(opportunity_by_slug["mlh-global-hack-week-ai-agents"]),
             ),
         ]
+        self.feedback_items: list[FeedbackSubmissionResponse] = []
 
     def to_summary(self, opportunity: OpportunityDetail) -> OpportunitySummary:
         return OpportunitySummary(**opportunity.model_dump(exclude={"application_url", "eligibility_text", "required_skills", "stipend_min", "stipend_max", "currency"}))
@@ -383,6 +386,37 @@ class DemoStore:
             saved_applications=len([item for item in self.applications if item.status == "saved"]),
             applied_applications=len([item for item in self.applications if item.status != "saved"]),
         )
+
+    def create_feedback(
+        self, *, category: str, message: str, name: str | None = None, email: str | None = None
+    ) -> FeedbackSubmissionResponse:
+        submission = FeedbackSubmissionResponse(
+            id=uuid4(),
+            category=category,
+            message=message,
+            name=name or self.user.full_name,
+            email=email or self.user.email,
+            status="new",
+            created_at=datetime.now(UTC),
+        )
+        self.feedback_items.insert(0, submission)
+        return submission
+
+    def list_feedback(self) -> list[AdminFeedbackItem]:
+        return [
+            AdminFeedbackItem(
+                id=item.id,
+                category=item.category,
+                message=item.message,
+                name=item.name,
+                email=item.email,
+                status=item.status,
+                created_at=item.created_at,
+                user_id=self.user.id,
+                user_name=self.user.full_name,
+            )
+            for item in self.feedback_items
+        ]
 
     def notifications(self) -> list[NotificationItem]:
         return [

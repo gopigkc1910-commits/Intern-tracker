@@ -1,8 +1,10 @@
 import type {
+  AdminFeedbackItem,
   AnalyticsOverview,
   ApplicationRecord,
   AuthProvider,
   AuthResponse,
+  FeedbackSubmission,
   NotificationItem,
   OpportunityDetail,
   OpportunitySummary,
@@ -171,4 +173,15 @@ export async function getThreads(): Promise<ThreadItem[]> {
 
 export async function getAnalytics(): Promise<AnalyticsOverview> {
   return apiFetch<AnalyticsOverview>("/admin/analytics/overview");
+}
+
+export async function submitFeedback(
+  payload: { category: string; message: string; name?: string; email?: string },
+  token?: string | null
+) {
+  return apiFetch<FeedbackSubmission>("/feedback", {
+    method: "POST",
+    token,
+    body: JSON.stringify(payload)
+  });
 }

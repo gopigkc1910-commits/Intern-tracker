@@ -11,7 +11,15 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
 from app.demo_store import DEMO_STORE
-from app.models import Application, AuthSession, Opportunity, Organization, User, UserProfile
+from app.models import (
+    Application,
+    AuthSession,
+    FeedbackSubmission,
+    Opportunity,
+    Organization,
+    User,
+    UserProfile,
+)
 from app.schemas import (
     ApplicationRecord,
     OpportunityDetail,

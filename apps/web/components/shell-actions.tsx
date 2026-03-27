@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 
-import { clientJsonFetch } from "../lib/client-json";
+import { SessionActionButton } from "./session-action-button";
 
 type ShellActionsProps = {
   initialTheme: string;
@@ -13,10 +12,7 @@ type ShellActionsProps = {
 };
 
 export function ShellActions({ initialTheme, initialAuthenticated, showAdminLink = false }: ShellActionsProps) {
-  const router = useRouter();
   const [theme, setTheme] = useState(initialTheme);
-  const [isAuthenticated, setIsAuthenticated] = useState(initialAuthenticated);
-  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -37,29 +33,10 @@ export function ShellActions({ initialTheme, initialAuthenticated, showAdminLink
       >
         {theme === "dark" ? "Light mode" : "Dark mode"}
       </button>
-      {isAuthenticated ? (
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => {
-            startTransition(async () => {
-              await clientJsonFetch<{ ok: boolean }>("/api/auth/session", {
-                method: "DELETE"
-              });
-              setIsAuthenticated(false);
-              router.push("/");
-              router.refresh();
-            });
-          }}
-          className="rounded-full bg-ink px-4 py-2 text-sm text-mist"
-        >
-          {isPending ? "Signing out..." : "Sign out"}
-        </button>
-      ) : (
-        <Link href="/" className="rounded-full bg-ink px-4 py-2 text-sm text-mist">
-          Sign in
-        </Link>
-      )}
+      <SessionActionButton
+        isAuthenticated={initialAuthenticated}
+        className="rounded-full bg-ink px-4 py-2 text-sm text-mist"
+      />
     </div>
   );
 }

@@ -201,6 +201,39 @@ class AdminUsersResponse(BaseModel):
     items: list[AdminUserSummary]
 
 
+class CreateFeedbackRequest(BaseModel):
+    category: str
+    message: str = Field(min_length=5, max_length=4000)
+    name: str | None = None
+    email: str | None = None
+
+
+class FeedbackSubmissionResponse(BaseModel):
+    id: UUID
+    category: str
+    message: str
+    name: str | None = None
+    email: str | None = None
+    status: str
+    created_at: datetime
+
+
+class AdminFeedbackItem(BaseModel):
+    id: UUID
+    category: str
+    message: str
+    name: str | None = None
+    email: str | None = None
+    status: str
+    created_at: datetime
+    user_id: UUID | None = None
+    user_name: str | None = None
+
+
+class AdminFeedbackResponse(BaseModel):
+    items: list[AdminFeedbackItem]
+
+
 class ResumeAnalyzeRequest(BaseModel):
     opportunity_slug: str | None = None
     resume_text: str | None = None

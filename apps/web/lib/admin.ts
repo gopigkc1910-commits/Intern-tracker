@@ -1,4 +1,4 @@
-import type { AdminUserSummary, AnalyticsOverview } from "./types";
+import type { AdminFeedbackItem, AdminUserSummary, AnalyticsOverview } from "./types";
 
 const API_ROOT =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8000/api/v1";
@@ -34,4 +34,8 @@ export async function getAdminOverview() {
 
 export async function getAdminUsers() {
   return adminFetch<{ items: AdminUserSummary[] }>("/admin/users");
+}
+
+export async function getAdminFeedback() {
+  return adminFetch<{ items: AdminFeedbackItem[] }>("/admin/feedback");
 }

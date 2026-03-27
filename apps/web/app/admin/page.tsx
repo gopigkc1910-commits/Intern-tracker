@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
-import { getAdminOverview, getAdminUsers } from "../../lib/admin";
-import type { AdminUserSummary, AnalyticsOverview } from "../../lib/types";
+import { getAdminFeedback, getAdminOverview, getAdminUsers } from "../../lib/admin";
+import { getServerAuthToken } from "../../lib/session";
+import type { AdminFeedbackItem, AdminUserSummary, AnalyticsOverview } from "../../lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +17,17 @@ function formatDate(value: string) {
 }
 
 export default async function AdminPage() {
+  const token = await getServerAuthToken();
   let overview: AnalyticsOverview;
   let users: AdminUserSummary[];
+  let feedbackItems: AdminFeedbackItem[];
 
   try {
-    [overview, { items: users }] = await Promise.all([getAdminOverview(), getAdminUsers()]);
+    [overview, { items: users }, { items: feedbackItems }] = await Promise.all([
+      getAdminOverview(),
+      getAdminUsers(),
+      getAdminFeedback()
+    ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Admin data is unavailable.";
     return (
@@ -27,118 +35,208 @@ export default async function AdminPage() {
         <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
           <AppHeader
             eyebrow="Admin"
-            title="Admin access is not ready."
+            title="Admin route is live, but data access is blocked."
             description={message}
             links={[
               { href: "/", label: "Landing" },
               { href: "/dashboard", label: "Dashboard" }
             ]}
           />
-          <div className="mt-8 rounded-3xl border border-coral/20 bg-white/90 p-6 text-sm leading-7 text-slate">
-            Set `INTERN_TRACKER_ADMIN_TOKEN` on both the API and web services, then reload this page.
+          <div className="mt-8 rounded-[28px] border border-coral/20 bg-white/90 p-6 text-sm leading-7 text-slate">
+            Set `INTERN_TRACKER_ADMIN_TOKEN` on both the Render API service and the Render web service, then redeploy
+            both services. If the deployment was made before the `/admin` route existed, trigger a fresh web deploy as
+            well.
           </div>
         </section>
       </main>
     );
   }
 
+  const showAdminLink = true;
+  const completedUsers = users.filter((user) => user.onboarding_completed).length;
+  const incompleteUsers = users.length - completedUsers;
+  const recentUsers = users.slice(0, 4);
+  const recentFeedback = feedbackItems.slice(0, 5);
+
   return (
-    <main className="page-shell">
+    <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
       <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
         <AppHeader
           eyebrow="Admin"
-          title="User and platform overview"
-          description="Review account creation, onboarding progress, and tracker usage from one production-facing panel."
+          title="Platform command center"
+          description="Monitor student activity, review onboarding health, and keep the discovery pipeline moving from one modern control room."
           links={[
             { href: "/dashboard", label: "Dashboard" },
             { href: "/opportunities", label: "Feed" }
           ]}
         />
 
-        <div className="mt-8 grid gap-4 md:grid-cols-4">
-          {[
-            ["Active users", overview.active_users.toString()],
-            ["Opportunities", overview.new_opportunities.toString()],
-            ["Saved apps", overview.saved_applications.toString()],
-            ["Applied apps", overview.applied_applications.toString()]
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-3xl border border-white/60 bg-white/90 p-5">
-              <p className="text-sm text-slate">{label}</p>
-              <p className="mt-2 text-3xl font-semibold text-ink">{value}</p>
+        <div className="mt-8 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <section className="rounded-[30px] bg-ink p-6 text-mist">
+            <p className="text-xs uppercase tracking-[0.28em] text-mint/75">Live snapshot</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {[
+                ["Active users", overview.active_users.toString()],
+                ["Live opportunities", overview.new_opportunities.toString()],
+                ["Saved applications", overview.saved_applications.toString()],
+                ["Applied applications", overview.applied_applications.toString()]
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-[24px] bg-white/10 p-5">
+                  <p className="text-sm text-mint/80">{label}</p>
+                  <p className="mt-3 text-4xl font-semibold text-white">{value}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </section>
+
+          <section className="rounded-[30px] border border-white/60 bg-white/90 p-6">
+            <p className="text-xs uppercase tracking-[0.28em] text-teal">Health checks</p>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[22px] bg-mist p-4">
+                <p className="text-sm text-slate">Completed onboarding</p>
+                <p className="mt-2 text-2xl font-semibold text-ink">{completedUsers}</p>
+              </div>
+              <div className="rounded-[22px] bg-mist p-4">
+                <p className="text-sm text-slate">Needs onboarding follow-up</p>
+                <p className="mt-2 text-2xl font-semibold text-ink">{incompleteUsers}</p>
+              </div>
+              <div className="rounded-[22px] border border-dashed border-teal/20 bg-white p-4 text-sm leading-6 text-slate">
+                API shortcut: <code>GET /api/v1/admin/users</code> with the <code>X-Admin-Token</code> header.
+              </div>
+            </div>
+          </section>
         </div>
 
-        <section className="mt-8 rounded-[28px] border border-white/60 bg-white/90 p-5 shadow-glow">
+        <div className="mt-8 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+          <section className="rounded-[30px] border border-white/60 bg-white/90 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-ink">Recent user activity</h2>
+                <p className="mt-1 text-sm text-slate">Newest accounts and profile completion status.</p>
+              </div>
+              <p className="text-sm text-slate">{users.length} total users</p>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {recentUsers.map((user) => (
+                <div key={user.id} className="rounded-[24px] bg-mist p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-ink">{user.full_name}</p>
+                      <p className="mt-1 text-sm text-slate">{user.email ?? user.phone ?? "No contact info"}</p>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-teal">
+                      {user.onboarding_completed ? "Complete" : "Pending"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-slate">
+                    {[user.college_name, user.degree, user.branch].filter(Boolean).join(" | ") || "Academics pending"}
+                  </p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate">
+                    Joined {formatDate(user.created_at)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[30px] border border-white/60 bg-white/90 p-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-ink">User directory</h2>
+                <p className="mt-1 text-sm leading-6 text-slate">
+                  Review profile quality, contact coverage, location data, and application counts in one place.
+                </p>
+              </div>
+              <Link href="/profile" className="text-sm font-medium text-teal">
+                Check profile schema
+              </Link>
+            </div>
+
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-full border-separate border-spacing-y-3 text-left text-sm">
+                <thead>
+                  <tr className="text-slate">
+                    <th className="px-3 py-2 font-medium">User</th>
+                    <th className="px-3 py-2 font-medium">Contact</th>
+                    <th className="px-3 py-2 font-medium">Academics</th>
+                    <th className="px-3 py-2 font-medium">Location</th>
+                    <th className="px-3 py-2 font-medium">Tracker</th>
+                    <th className="px-3 py-2 font-medium">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id} className="rounded-2xl bg-mist text-ink">
+                      <td className="rounded-l-2xl px-3 py-4 align-top">
+                        <div className="font-medium">{user.full_name}</div>
+                        <div className="mt-1 text-xs text-slate">{user.id}</div>
+                      </td>
+                      <td className="px-3 py-4 align-top text-slate">
+                        <div>{user.email ?? "No email"}</div>
+                        <div className="mt-1">{user.phone ?? "No phone"}</div>
+                      </td>
+                      <td className="px-3 py-4 align-top text-slate">
+                        <div>{user.college_name ?? "No college"}</div>
+                        <div className="mt-1">
+                          {[user.degree, user.branch, user.graduation_year?.toString()].filter(Boolean).join(" | ") ||
+                            "Not completed"}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 align-top text-slate">
+                        {[user.city, user.country].filter(Boolean).join(", ") || "Not provided"}
+                      </td>
+                      <td className="px-3 py-4 align-top text-slate">
+                        <div>{user.applications_count} applications</div>
+                        <div className="mt-1">
+                          {user.onboarding_completed ? "Onboarding complete" : "Onboarding incomplete"}
+                        </div>
+                      </td>
+                      <td className="rounded-r-2xl px-3 py-4 align-top text-slate">{formatDate(user.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section className="mt-8 rounded-[30px] border border-white/60 bg-white/90 p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-ink">Stored users</h2>
-              <p className="text-sm leading-6 text-slate">
-                The API stores profile and tracker data in PostgreSQL when database mode is enabled.
+              <h2 className="text-xl font-semibold text-ink">Feedback inbox</h2>
+              <p className="mt-1 text-sm leading-6 text-slate">
+                User-reported bugs, product requests, and general feedback submitted from inside the app.
               </p>
             </div>
-            <p className="text-sm text-slate">{users.length} user records</p>
+            <p className="text-sm text-slate">{feedbackItems.length} submissions</p>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3 text-left text-sm">
-              <thead>
-                <tr className="text-slate">
-                  <th className="px-3 py-2 font-medium">User</th>
-                  <th className="px-3 py-2 font-medium">Contact</th>
-                  <th className="px-3 py-2 font-medium">Academics</th>
-                  <th className="px-3 py-2 font-medium">Location</th>
-                  <th className="px-3 py-2 font-medium">Tracker</th>
-                  <th className="px-3 py-2 font-medium">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="rounded-2xl bg-mist text-ink">
-                    <td className="rounded-l-2xl px-3 py-4 align-top">
-                      <div className="font-medium">{user.full_name}</div>
-                      <div className="mt-1 text-xs text-slate">{user.id}</div>
-                    </td>
-                    <td className="px-3 py-4 align-top text-slate">
-                      <div>{user.email ?? "No email"}</div>
-                      <div className="mt-1">{user.phone ?? "No phone"}</div>
-                    </td>
-                    <td className="px-3 py-4 align-top text-slate">
-                      <div>{user.college_name ?? "No college"}</div>
-                      <div className="mt-1">
-                        {[user.degree, user.branch, user.graduation_year?.toString()].filter(Boolean).join(" | ") ||
-                          "Not completed"}
-                      </div>
-                    </td>
-                    <td className="px-3 py-4 align-top text-slate">
-                      {[user.city, user.country].filter(Boolean).join(", ") || "Not provided"}
-                    </td>
-                    <td className="px-3 py-4 align-top text-slate">
-                      <div>{user.applications_count} applications</div>
-                      <div className="mt-1">
-                        {user.onboarding_completed ? "Onboarding complete" : "Onboarding incomplete"}
-                      </div>
-                    </td>
-                    <td className="rounded-r-2xl px-3 py-4 align-top text-slate">{formatDate(user.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-6 text-sm text-slate">
-            Direct API access also works:
-            {" "}
-            <code>GET /api/v1/admin/users</code>
-            {" "}
-            with the
-            {" "}
-            <code>X-Admin-Token</code>
-            {" "}
-            header.
-          </div>
+          {recentFeedback.length === 0 ? (
+            <div className="mt-6 rounded-[24px] bg-mist p-5 text-sm text-slate">
+              No feedback has been submitted yet. The new feedback form will populate this inbox automatically.
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              {recentFeedback.map((item) => (
+                <article key={item.id} className="rounded-[24px] bg-mist p-5">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-teal">
+                      {item.category}
+                    </span>
+                    <span className="text-xs uppercase tracking-[0.18em] text-slate">{formatDate(item.created_at)}</span>
+                  </div>
+                  <p className="mt-4 text-sm leading-7 text-ink">{item.message}</p>
+                  <div className="mt-4 text-sm text-slate">
+                    <div>{item.name ?? item.user_name ?? "Anonymous visitor"}</div>
+                    <div>{item.email ?? "No email provided"}</div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </section>
-    </main>
+    </AppSidebarShell>
   );
 }
