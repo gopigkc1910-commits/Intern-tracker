@@ -17,13 +17,13 @@ def list_threads() -> ThreadsResponse:
                 id="thread-1",
                 title="Best AI hackathons to apply for this semester?",
                 category="hackathons",
-                author_name="Priya Sharma",
+                author_name="Community Member",
             ),
             ThreadItem(
                 id="thread-2",
                 title="Looking for a backend teammate for MLH Global Hack Week",
                 category="general",
-                author_name="Arjun Patel",
+                author_name="Builder Circle",
             ),
         ]
     )

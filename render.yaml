@@ -15,8 +15,16 @@ services:
           name: intern-tracker-db
           property: connectionString
       - key: INTERN_TRACKER_DEMO_MODE
-        value: auto
+        value: database
+      - key: INTERN_TRACKER_AUTH_DEBUG
+        value: "false"
       - key: INTERN_TRACKER_CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: INTERN_TRACKER_GOOGLE_OAUTH_URL
+        sync: false
+      - key: INTERN_TRACKER_GITHUB_OAUTH_URL
+        sync: false
+      - key: INTERN_TRACKER_LINKEDIN_OAUTH_URL
         sync: false
 
   - type: web

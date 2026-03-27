@@ -111,10 +111,20 @@ class RequestOtpRequest(BaseModel):
     phone: str | None = None
 
 
+class RequestOtpResponse(BaseModel):
+    challenge_id: UUID
+    message: str
+    channel: str
+    target_hint: str
+    development_code: str | None = None
+
+
 class VerifyOtpRequest(BaseModel):
+    challenge_id: UUID
     email: str | None = None
     phone: str | None = None
     otp: str = "000000"
+    full_name: str | None = None
 
 
 class AuthResponse(BaseModel):
@@ -125,6 +135,17 @@ class AuthResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class AuthProvider(BaseModel):
+    id: str
+    label: str
+    auth_url: str | None = None
+    configured: bool
+
+
+class AuthProvidersResponse(BaseModel):
+    items: list[AuthProvider]
 
 
 class NotificationItem(BaseModel):

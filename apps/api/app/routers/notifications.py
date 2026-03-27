@@ -16,12 +16,12 @@ def list_notifications() -> NotificationsResponse:
             NotificationItem(
                 id="notif-1",
                 title="Deadline reminder",
-                detail="Google SWE Internship closes in 3 days.",
+                detail="A saved opportunity on your board closes in the next few days.",
             ),
             NotificationItem(
                 id="notif-2",
-                title="New recommendation",
-                detail="A product engineering internship now matches your profile.",
+                title="Profile tip",
+                detail="Complete your skills and location preferences to improve recommendations.",
             ),
         ]
     )

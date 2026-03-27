@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { createApplication, getBrowserDemoToken, updateApplication } from "../lib/api";
+import { createApplication, getBrowserAuthToken, updateApplication } from "../lib/api";
 import type { ApplicationRecord } from "../lib/types";
 
 type OpportunityActionPanelProps = {
@@ -21,9 +21,9 @@ export function OpportunityActionPanel({
 
   const runAction = (status: "saved" | "applied") => {
     startTransition(async () => {
-      const token = getBrowserDemoToken();
+      const token = getBrowserAuthToken();
       if (!token) {
-        setMessage("Start the demo session first to save or apply.");
+        setMessage("Sign in to save or apply. Guests can still browse freely.");
         return;
       }
 
@@ -36,7 +36,7 @@ export function OpportunityActionPanel({
         setMessage(status === "saved" ? "Saved to your tracker." : "Application marked as submitted.");
         router.refresh();
       } catch {
-        setMessage("Action failed. Check whether the API is running.");
+        setMessage("Action failed. Check whether the API is running and your session is active.");
       }
     });
   };

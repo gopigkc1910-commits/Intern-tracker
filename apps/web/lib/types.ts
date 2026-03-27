@@ -60,6 +60,21 @@ export type AuthResponse = {
   user: UserProfile;
 };
 
+export type RequestOtpResponse = {
+  challenge_id: string;
+  message: string;
+  channel: string;
+  target_hint: string;
+  development_code: string | null;
+};
+
+export type AuthProvider = {
+  id: string;
+  label: string;
+  auth_url: string | null;
+  configured: boolean;
+};
+
 export type NotificationItem = {
   id: string;
   title: string;

@@ -12,12 +12,20 @@ from app.routers import admin, ai, applications, auth, community, notifications,
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    if settings.demo_mode == "demo":
+        configure_storage_mode("demo")
+        yield
+        return
+
     db = SessionLocal()
     try:
         create_schema_and_seed(db)
         configure_storage_mode("database")
     except Exception:
-        configure_storage_mode("demo")
+        if settings.demo_mode == "auto":
+            configure_storage_mode("demo")
+        else:
+            raise
     finally:
         db.close()
     yield

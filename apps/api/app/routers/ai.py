@@ -48,6 +48,6 @@ def cover_letter(payload: CoverLetterRequest, db: Session = Depends(get_db)) -> 
             f"I am excited to apply for {title}. My recent student projects in backend systems, product execution, "
             "and practical AI have prepared me to contribute quickly while learning from strong mentors.\n\n"
             "I would love to bring a builder mindset, clear communication, and ownership to this opportunity.\n\n"
-            "Sincerely,\nPriya Sharma"
+            "Sincerely,\n[Your Name]"
         )
     )

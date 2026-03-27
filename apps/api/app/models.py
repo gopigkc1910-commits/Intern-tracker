@@ -32,6 +32,9 @@ class User(Base):
         "UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
     applications: Mapped[list[Application]] = relationship("Application", back_populates="user")
+    sessions: Mapped[list[AuthSession]] = relationship(
+        "AuthSession", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class UserProfile(Base):
@@ -119,3 +122,29 @@ class Application(Base):
 
     user: Mapped[User] = relationship("User", back_populates="applications")
     opportunity: Mapped[Opportunity] = relationship("Opportunity", back_populates="applications")
+
+
+class AuthChallenge(Base):
+    __tablename__ = "auth_challenges"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    code_hash: Mapped[str] = mapped_column(String(128))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    token: Mapped[str] = mapped_column(String(255), unique=True)
+    provider: Mapped[str] = mapped_column(String(50), default="otp")
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship("User", back_populates="sessions")

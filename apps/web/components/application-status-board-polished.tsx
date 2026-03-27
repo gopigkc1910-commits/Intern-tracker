@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { deleteApplication, getBrowserDemoToken, updateApplication } from "../lib/api";
+import { deleteApplication, getBrowserAuthToken, updateApplication } from "../lib/api";
 import type { ApplicationRecord } from "../lib/types";
 
 const STATUSES = ["saved", "applied", "shortlisted", "rejected", "accepted"] as const;
@@ -15,9 +15,9 @@ export function ApplicationStatusBoardPolished({ items }: { items: ApplicationRe
 
   const updateStatus = (applicationId: string, status: (typeof STATUSES)[number]) => {
     startTransition(async () => {
-      const token = getBrowserDemoToken();
+      const token = getBrowserAuthToken();
       if (!token) {
-        setMessage("Start the demo session again to manage your tracker.");
+        setMessage("Sign in again to manage your tracker.");
         return;
       }
       try {
@@ -32,9 +32,9 @@ export function ApplicationStatusBoardPolished({ items }: { items: ApplicationRe
 
   const removeItem = (applicationId: string) => {
     startTransition(async () => {
-      const token = getBrowserDemoToken();
+      const token = getBrowserAuthToken();
       if (!token) {
-        setMessage("Start the demo session again to manage your tracker.");
+        setMessage("Sign in again to manage your tracker.");
         return;
       }
       try {

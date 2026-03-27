@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { getBrowserDemoToken, updateProfile } from "../lib/api";
+import { getBrowserAuthToken, updateProfile } from "../lib/api";
 import type { UserProfile } from "../lib/types";
 
 function fromCommaList(value: string) {
@@ -42,9 +42,9 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
       onSubmit={(event) => {
         event.preventDefault();
         startTransition(async () => {
-          const token = getBrowserDemoToken();
+          const token = getBrowserAuthToken();
           if (!token) {
-            setMessage("Start the demo session first to save profile changes.");
+            setMessage("Sign in first to save profile changes.");
             return;
           }
 
@@ -71,7 +71,7 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
             setMessage("Profile saved. Recommendations will reflect the new preferences.");
             router.refresh();
           } catch {
-            setMessage("Could not save the profile. Make sure the API is running.");
+            setMessage("Could not save the profile. Make sure the API is available.");
           }
         });
       }}

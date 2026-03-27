@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { DemoLoginButton } from "../components/demo-login-button";
+import { AuthEntryPanel } from "../components/auth-entry-panel";
 import { listOpportunities } from "../lib/api";
 import type { OpportunitySummary } from "../lib/types";
 
@@ -28,8 +28,10 @@ export default async function HomePage() {
       <section className="glass-panel soft-grid overflow-hidden rounded-[36px] p-6 shadow-glow md:p-10">
         <nav className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="section-heading">Intern Tracker</p>
-            <p className="mt-2 text-sm text-slate">Student opportunity finder, tracker, and recommendation demo</p>
+            <p className="section-heading">Intern Radar</p>
+            <p className="mt-2 text-sm text-slate">
+              Student opportunity finder, tracker, and career workflow for modern internship searches
+            </p>
           </div>
           <div className="pill-nav flex-wrap text-sm text-slate">
             <Link href="/opportunities">Explore</Link>
@@ -48,8 +50,8 @@ export default async function HomePage() {
               Discover internships, hackathons, scholarships, and events. Track what matters before it closes.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate">
-              This MVP gives you a practical workflow: browse real seeded opportunities from the API, save or apply,
-              manage your tracker, and tune recommendations through your profile.
+              Browse opportunities as a guest, then sign in with email or phone when you are ready to save, track,
+              personalize recommendations, and build a stronger search workflow.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -64,17 +66,15 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-6 max-w-sm">
-              <DemoLoginButton
-                className="rounded-full border border-coral/20 bg-coral px-6 py-3 text-sm font-medium text-white"
-              />
+            <div className="mt-6 max-w-2xl">
+              <AuthEntryPanel redirectTo="/dashboard" />
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
                 ["Browse fast", "Search internships, hackathons, scholarships, and events from one place."],
                 ["Track clearly", "Save or apply, then update statuses from a single dashboard."],
-                ["Tune matches", "Edit profile preferences and watch recommendations shift."]
+                ["Tune matches", "Edit profile preferences and watch recommendations shift in real time."]
               ].map(([title, copy]) => (
                 <div key={title} className="soft-card p-4">
                   <h2 className="text-sm font-semibold text-ink">{title}</h2>
@@ -88,14 +88,14 @@ export default async function HomePage() {
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <div className="text-sm text-mint">Fresh opportunities</div>
-                <div className="text-2xl font-semibold">API-backed sample feed</div>
+                <div className="text-2xl font-semibold">Production seed feed</div>
               </div>
-              <div className="rounded-full bg-white/10 px-3 py-1 text-xs">Balanced MVP</div>
+              <div className="rounded-full bg-white/10 px-3 py-1 text-xs">Guest friendly</div>
             </div>
 
             {apiError ? (
               <div className="rounded-2xl bg-white/10 p-4 text-sm text-mint">
-                Start the FastAPI backend to see live recommendations here.
+                The API is still waking up. Refresh in a moment to see the live feed.
               </div>
             ) : (
               <div className="space-y-4">

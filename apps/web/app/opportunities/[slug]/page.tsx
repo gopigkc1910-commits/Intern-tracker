@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppHeader } from "../../../components/app-header";
 import { OpportunityActionPanel } from "../../../components/opportunity-action-panel";
 import { getApplications, getOpportunity } from "../../../lib/api";
-import { getServerDemoToken } from "../../../lib/session";
+import { getServerAuthToken } from "../../../lib/session";
 import type { OpportunityDetail } from "../../../lib/types";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
           <p className="text-xs uppercase tracking-[0.24em] text-teal">Opportunity Detail</p>
           <h1 className="mt-3 text-3xl font-semibold text-ink">This opportunity is unavailable right now.</h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-slate">
-            The backend may still be starting, or the demo server is not running yet.
+            The backend may still be starting, or this listing is temporarily unavailable.
           </p>
           <div className="mt-6">
             <Link href="/opportunities" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist">
@@ -42,7 +42,7 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
       </main>
     );
   }
-  const token = await getServerDemoToken();
+  const token = await getServerAuthToken();
   const applications = token ? await getApplications(token).catch(() => []) : [];
   const existingApplication = applications.find((item) => item.opportunity.id === opportunity.id);
 

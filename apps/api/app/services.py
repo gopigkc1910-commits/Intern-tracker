@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
@@ -9,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
 from app.demo_store import DEMO_STORE
-from app.models import Application, Opportunity, Organization, User, UserProfile
+from app.models import Application, AuthSession, Opportunity, Organization, User, UserProfile
 from app.schemas import (
     ApplicationRecord,
     OpportunityDetail,
@@ -38,13 +40,14 @@ def create_schema_and_seed(db: Session) -> None:
     from app.db import Base, engine
 
     Base.metadata.create_all(bind=engine)
-
-    demo_user = db.scalar(select(User).where(User.email == settings.demo_email))
-    if demo_user is None:
-        seed_demo_data(db)
+    ensure_global_seed_data(db)
 
 
-def seed_demo_data(db: Session) -> None:
+def ensure_global_seed_data(db: Session) -> None:
+    existing_opportunity = db.scalar(select(Opportunity.id).limit(1))
+    if existing_opportunity is not None:
+        return
+
     organizations = [
         Organization(name="Google", website_url="https://careers.google.com", type="company"),
         Organization(name="Devfolio", website_url="https://devfolio.co", type="platform"),
@@ -58,36 +61,6 @@ def seed_demo_data(db: Session) -> None:
     ]
     db.add_all(organizations)
     db.flush()
-
-    demo_user = User(
-        email=settings.demo_email,
-        phone=settings.demo_phone,
-        full_name="Priya Sharma",
-        college_name="National Institute of Technology",
-        degree="B.Tech",
-        branch="Computer Science",
-        graduation_year=2027,
-        city="Bengaluru",
-        country="India",
-    )
-    db.add(demo_user)
-    db.flush()
-
-    db.add(
-        UserProfile(
-            user_id=demo_user.id,
-            bio="Student builder focused on backend, AI, and product engineering.",
-            goals="Find strong internships and hackathons with mentorship.",
-            preferred_domains=["AI", "Backend", "Product"],
-            preferred_locations=["Remote", "Hybrid"],
-            preferred_opportunity_types=["internship", "hackathon"],
-            skills=["Python", "FastAPI", "React", "PostgreSQL"],
-            github_url="https://github.com/demo-student",
-            linkedin_url="https://linkedin.com/in/demo-student",
-            resume_url="https://example.com/resume.pdf",
-            onboarding_completed=True,
-        )
-    )
 
     now = datetime.now(UTC)
     opportunities = [
@@ -299,35 +272,6 @@ def seed_demo_data(db: Session) -> None:
             )
         )
     db.add_all(created_opportunities)
-    db.flush()
-
-    by_slug = {item.slug: item for item in created_opportunities}
-    db.add_all(
-        [
-            Application(
-                user_id=demo_user.id,
-                opportunity_id=by_slug["google-swe-internship-program"].id,
-                status="saved",
-                note="Strong backend fit. Apply after polishing resume bullets.",
-                next_follow_up_at=now + timedelta(days=1),
-            ),
-            Application(
-                user_id=demo_user.id,
-                opportunity_id=by_slug["microsoft-product-engineering-intern"].id,
-                status="applied",
-                note="Submitted referral request through alumni network.",
-                applied_at=now - timedelta(days=2),
-                next_follow_up_at=now + timedelta(days=5),
-            ),
-            Application(
-                user_id=demo_user.id,
-                opportunity_id=by_slug["mlh-global-hack-week-ai-agents"].id,
-                status="shortlisted",
-                note="Team formation in progress with classmates.",
-                applied_at=now - timedelta(days=1),
-            ),
-        ]
-    )
     db.commit()
 
 
@@ -345,6 +289,72 @@ def get_demo_user(db: Session) -> User:
             .where(or_(User.email == settings.demo_email, User.phone == settings.demo_phone))
         )
     return user
+
+
+def hash_otp(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def mask_identifier(*, email: str | None = None, phone: str | None = None) -> str:
+    if email:
+        local, _, domain = email.partition("@")
+        prefix = local[:2] if len(local) > 2 else local[:1]
+        return f"{prefix}{'*' * max(len(local) - len(prefix), 1)}@{domain}"
+    if phone:
+        return f"{'*' * max(len(phone) - 2, 1)}{phone[-2:]}"
+    return "your account"
+
+
+def build_default_name(*, email: str | None = None, phone: str | None = None, full_name: str | None = None) -> str:
+    if full_name and full_name.strip():
+        return full_name.strip()
+    if email:
+        candidate = email.split("@", 1)[0].replace(".", " ").replace("_", " ").strip()
+        if candidate:
+            return " ".join(part.capitalize() for part in candidate.split())
+    if phone:
+        return f"Student {phone[-4:]}"
+    return "New Student"
+
+
+def create_session(db: Session, user: User, provider: str = "otp") -> AuthSession:
+    session = AuthSession(
+        user_id=user.id,
+        token=f"itrk_{secrets.token_urlsafe(32)}",
+        provider=provider,
+        expires_at=datetime.now(UTC) + timedelta(days=settings.auth_session_ttl_days),
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def get_user_by_identifier(db: Session, *, email: str | None = None, phone: str | None = None) -> User | None:
+    if email:
+        return db.scalar(select(User).options(joinedload(User.profile)).where(User.email == email))
+    if phone:
+        return db.scalar(select(User).options(joinedload(User.profile)).where(User.phone == phone))
+    return None
+
+
+def create_user_with_profile(
+    db: Session,
+    *,
+    email: str | None = None,
+    phone: str | None = None,
+    full_name: str | None = None,
+) -> User:
+    user = User(
+        email=email,
+        phone=phone,
+        full_name=build_default_name(email=email, phone=phone, full_name=full_name),
+    )
+    db.add(user)
+    db.flush()
+    db.add(UserProfile(user_id=user.id, onboarding_completed=False))
+    db.commit()
+    return db.scalar(select(User).options(joinedload(User.profile)).where(User.id == user.id))
 
 
 def to_opportunity_summary(opportunity: Opportunity) -> OpportunitySummary:

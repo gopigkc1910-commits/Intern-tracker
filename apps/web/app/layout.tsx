@@ -1,6 +1,10 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import type { ReactNode } from "react";
+
+import { AUTH_TOKEN_COOKIE } from "../lib/api";
+import { ShellActions } from "../components/shell-actions";
 
 export const metadata: Metadata = {
   title: "Intern Tracker",
@@ -8,9 +12,24 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = cookies();
+  const theme = cookieStore.get("intern_tracker_theme")?.value === "dark" ? "dark" : "light";
+  const isAuthenticated = Boolean(cookieStore.get(AUTH_TOKEN_COOKIE)?.value);
+
   return (
-    <html lang="en">
-      <body className="bg-mist text-ink antialiased">{children}</body>
+    <html lang="en" data-theme={theme}>
+      <body className="bg-mist text-ink antialiased">
+        <div className="page-shell pb-0 pt-5">
+          <div className="mb-4 flex flex-col gap-4 rounded-full border border-white/60 bg-white/70 px-5 py-3 backdrop-blur md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-xs uppercase tracking-[0.3em] text-teal">Intern Radar</div>
+              <div className="text-sm text-slate">Production-ready opportunity discovery and tracking baseline</div>
+            </div>
+            <ShellActions initialTheme={theme} initialAuthenticated={isAuthenticated} />
+          </div>
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

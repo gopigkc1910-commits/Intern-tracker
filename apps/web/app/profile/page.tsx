@@ -1,32 +1,29 @@
 import Link from "next/link";
 
 import { AppHeader } from "../../components/app-header";
-import { DemoLoginButton } from "../../components/demo-login-button";
+import { AuthEntryPanel } from "../../components/auth-entry-panel";
 import { ProfileForm } from "../../components/profile-form";
 import { getProfile } from "../../lib/api";
-import { getServerDemoToken } from "../../lib/session";
+import { getServerAuthToken } from "../../lib/session";
 import type { UserProfile } from "../../lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  const token = await getServerDemoToken();
+  const token = await getServerAuthToken();
 
   if (!token) {
     return (
       <main className="page-shell">
         <section className="glass-panel rounded-[32px] p-8 shadow-glow">
           <p className="text-xs uppercase tracking-[0.3em] text-teal">Profile</p>
-          <h1 className="mt-3 text-3xl font-semibold text-ink">Start the demo session to edit your profile.</h1>
+          <h1 className="mt-3 text-3xl font-semibold text-ink">Sign in to edit your profile.</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate">
-            Profile preferences drive the recommendation score, so this is one of the most important screens in the
-            MVP flow.
+            Profile preferences drive recommendation quality, notification relevance, and the overall search
+            experience.
           </p>
-          <div className="mt-6 max-w-sm">
-            <DemoLoginButton
-              redirectTo="/profile"
-              className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-mist"
-            />
+          <div className="mt-6 max-w-2xl">
+            <AuthEntryPanel redirectTo="/profile" />
           </div>
         </section>
       </main>
@@ -43,8 +40,7 @@ export default async function ProfilePage() {
           <p className="text-xs uppercase tracking-[0.3em] text-teal">Profile</p>
           <h1 className="mt-3 text-3xl font-semibold text-ink">Profile data could not load.</h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-slate">
-            Start the FastAPI backend and refresh this page. Your profile form is ready and will populate as soon as
-            the API responds.
+            The API did not return profile data yet. Refresh once the backend is healthy and your session should load.
           </p>
           <div className="mt-6">
             <Link href="/dashboard" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist">
@@ -62,7 +58,7 @@ export default async function ProfilePage() {
         <AppHeader
           eyebrow="Profile"
           title="Tune your recommendations."
-          description="Update domains, locations, opportunity types, and skills. The dashboard recommendations are designed to react to these preferences."
+          description="Update domains, locations, opportunity types, and skills. Recommendations, reminders, and tracker workflows react to these preferences."
           links={[{ href: "/dashboard", label: "Back to dashboard" }]}
         />
 

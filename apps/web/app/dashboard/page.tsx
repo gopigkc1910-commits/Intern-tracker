@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AppHeader } from "../../components/app-header";
 import { ApplicationStatusBoardPolished } from "../../components/application-status-board-polished";
-import { DemoLoginButton } from "../../components/demo-login-button";
+import { AuthEntryPanel } from "../../components/auth-entry-panel";
 import {
   getAnalytics,
   getApplications,
@@ -11,7 +11,7 @@ import {
   getRecommendedOpportunities,
   getThreads
 } from "../../lib/api";
-import { getServerDemoToken } from "../../lib/session";
+import { getServerAuthToken } from "../../lib/session";
 import type {
   AnalyticsOverview,
   ApplicationRecord,
@@ -24,23 +24,20 @@ import type {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const token = await getServerDemoToken();
+  const token = await getServerAuthToken();
 
   if (!token) {
     return (
       <main className="page-shell">
         <section className="glass-panel rounded-[32px] p-8 shadow-glow">
           <p className="text-xs uppercase tracking-[0.3em] text-teal">Dashboard</p>
-          <h1 className="mt-3 text-3xl font-semibold text-ink">Start the demo session to unlock your tracker.</h1>
+          <h1 className="mt-3 text-3xl font-semibold text-ink">Sign in to unlock your personal tracker.</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate">
-            This page uses the demo token to load profile-aware recommendations, applications, notifications, and
-            community cards.
+            Guests can explore the feed, but your dashboard, recommendations, and saved applications belong to your
+            own account.
           </p>
-          <div className="mt-6 max-w-sm">
-            <DemoLoginButton
-              redirectTo="/dashboard"
-              className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-mist"
-            />
+          <div className="mt-6 max-w-2xl">
+            <AuthEntryPanel redirectTo="/dashboard" />
           </div>
         </section>
       </main>
@@ -68,10 +65,10 @@ export default async function DashboardPage() {
       <main className="page-shell">
         <section className="glass-panel rounded-[32px] p-8 shadow-glow">
           <p className="text-xs uppercase tracking-[0.3em] text-teal">Dashboard</p>
-          <h1 className="mt-3 text-3xl font-semibold text-ink">The demo backend is not reachable yet.</h1>
+          <h1 className="mt-3 text-3xl font-semibold text-ink">The backend is not reachable yet.</h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-slate">
-            Start the FastAPI server first. The UI now fails fast instead of hanging, so once the API is up this page
-            should populate immediately.
+            The backend may still be waking up, or the session may need to be refreshed. Once the API responds, this
+            page should populate immediately.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist">
@@ -130,7 +127,7 @@ export default async function DashboardPage() {
               </div>
               {applications.length === 0 ? (
                 <div className="rounded-3xl border border-teal/10 bg-white/90 p-6 text-sm text-slate">
-                  Your tracker is empty. Save one opportunity from the feed to get started.
+                  Your tracker is empty. Save one opportunity from the feed to start building your pipeline.
                 </div>
               ) : (
                 <ApplicationStatusBoardPolished items={applications} />

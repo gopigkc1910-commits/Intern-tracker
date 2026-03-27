@@ -1,10 +1,12 @@
 import type {
   AnalyticsOverview,
   ApplicationRecord,
+  AuthProvider,
   AuthResponse,
   NotificationItem,
   OpportunityDetail,
   OpportunitySummary,
+  RequestOtpResponse,
   ThreadItem,
   UserProfile
 } from "./types";
@@ -13,7 +15,7 @@ const API_ROOT =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8000/api/v1";
 const API_TIMEOUT_MS = 4000;
 
-export const DEMO_TOKEN_COOKIE = "intern_tracker_demo_token";
+export const AUTH_TOKEN_COOKIE = "intern_tracker_auth_token";
 
 type FetchOptions = RequestInit & {
   token?: string | null;
@@ -54,20 +56,41 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
   return response.json() as Promise<T>;
 }
 
-export function getBrowserDemoToken(): string | null {
+export function getBrowserAuthToken(): string | null {
   if (typeof document === "undefined") {
     return null;
   }
   const cookie = document.cookie
     .split("; ")
-    .find((entry) => entry.startsWith(`${DEMO_TOKEN_COOKIE}=`));
+    .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`));
   return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
 }
 
-export async function verifyDemoOtp(): Promise<AuthResponse> {
+export async function getAuthProviders(): Promise<AuthProvider[]> {
+  const response = await apiFetch<{ items: AuthProvider[] }>("/auth/providers");
+  return response.items;
+}
+
+export async function requestOtp(payload: {
+  email?: string;
+  phone?: string;
+}): Promise<RequestOtpResponse> {
+  return apiFetch<RequestOtpResponse>("/auth/request-otp", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function verifyOtp(payload: {
+  challenge_id: string;
+  email?: string;
+  phone?: string;
+  otp: string;
+  full_name?: string;
+}): Promise<AuthResponse> {
   return apiFetch<AuthResponse>("/auth/verify-otp", {
     method: "POST",
-    body: JSON.stringify({ otp: "000000" })
+    body: JSON.stringify(payload)
   });
 }
 
