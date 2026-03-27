@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: intern-tracker-api
+    runtime: python
+    plan: free
+    rootDir: apps/api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.13
+      - key: INTERN_TRACKER_DATABASE_URL
+        fromDatabase:
+          name: intern-tracker-db
+          property: connectionString
+      - key: INTERN_TRACKER_DEMO_MODE
+        value: auto
+      - key: INTERN_TRACKER_CORS_ALLOWED_ORIGINS
+        sync: false
+
+  - type: web
+    name: intern-tracker-web
+    runtime: node
+    plan: free
+    rootDir: apps/web
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+
+databases:
+  - name: intern-tracker-db
+    plan: free

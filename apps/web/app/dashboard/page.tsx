@@ -1,0 +1,184 @@
+import Link from "next/link";
+
+import { AppHeader } from "../../components/app-header";
+import { ApplicationStatusBoardPolished } from "../../components/application-status-board-polished";
+import { DemoLoginButton } from "../../components/demo-login-button";
+import {
+  getAnalytics,
+  getApplications,
+  getNotifications,
+  getProfile,
+  getRecommendedOpportunities,
+  getThreads
+} from "../../lib/api";
+import { getServerDemoToken } from "../../lib/session";
+import type {
+  AnalyticsOverview,
+  ApplicationRecord,
+  NotificationItem,
+  OpportunitySummary,
+  ThreadItem,
+  UserProfile
+} from "../../lib/types";
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const token = await getServerDemoToken();
+
+  if (!token) {
+    return (
+      <main className="page-shell">
+        <section className="glass-panel rounded-[32px] p-8 shadow-glow">
+          <p className="text-xs uppercase tracking-[0.3em] text-teal">Dashboard</p>
+          <h1 className="mt-3 text-3xl font-semibold text-ink">Start the demo session to unlock your tracker.</h1>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-slate">
+            This page uses the demo token to load profile-aware recommendations, applications, notifications, and
+            community cards.
+          </p>
+          <div className="mt-6 max-w-sm">
+            <DemoLoginButton
+              redirectTo="/dashboard"
+              className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-mist"
+            />
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  let profile: UserProfile;
+  let applications: ApplicationRecord[];
+  let recommended: OpportunitySummary[];
+  let notifications: NotificationItem[];
+  let threads: ThreadItem[];
+  let analytics: AnalyticsOverview;
+
+  try {
+    [profile, applications, recommended, notifications, threads, analytics] = await Promise.all([
+      getProfile(token),
+      getApplications(token),
+      getRecommendedOpportunities(token),
+      getNotifications(),
+      getThreads(),
+      getAnalytics()
+    ]);
+  } catch {
+    return (
+      <main className="page-shell">
+        <section className="glass-panel rounded-[32px] p-8 shadow-glow">
+          <p className="text-xs uppercase tracking-[0.3em] text-teal">Dashboard</p>
+          <h1 className="mt-3 text-3xl font-semibold text-ink">The demo backend is not reachable yet.</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate">
+            Start the FastAPI server first. The UI now fails fast instead of hanging, so once the API is up this page
+            should populate immediately.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist">
+              Back to landing
+            </Link>
+            <Link
+              href="/opportunities"
+              className="rounded-full border border-teal/20 px-5 py-3 text-sm font-medium text-teal"
+            >
+              Open feed
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const savedCount = applications.filter((item) => item.status === "saved").length;
+  const activeCount = applications.filter((item) => item.status !== "rejected").length;
+
+  return (
+    <main className="page-shell">
+      <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
+        <AppHeader
+          eyebrow="Dashboard"
+          title={`Welcome back, ${profile.full_name.split(" ")[0]}`}
+          description="Track momentum, review recommendations, and keep deadlines from slipping."
+          links={[
+            { href: "/opportunities", label: "Browse feed" },
+            { href: "/profile", label: "Edit profile" }
+          ]}
+        />
+
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
+          {[
+            ["Applications", applications.length.toString()],
+            ["Saved", savedCount.toString()],
+            ["In play", activeCount.toString()],
+            ["Platform opportunities", analytics.new_opportunities.toString()]
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-3xl border border-white/60 bg-white/90 p-5">
+              <p className="text-sm text-slate">{label}</p>
+              <p className="mt-2 text-3xl font-semibold text-ink">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-ink">Application tracker</h2>
+                <Link href="/opportunities" className="text-sm font-medium text-teal">
+                  Add more
+                </Link>
+              </div>
+              {applications.length === 0 ? (
+                <div className="rounded-3xl border border-teal/10 bg-white/90 p-6 text-sm text-slate">
+                  Your tracker is empty. Save one opportunity from the feed to get started.
+                </div>
+              ) : (
+                <ApplicationStatusBoardPolished items={applications} />
+              )}
+            </section>
+          </div>
+
+          <div className="space-y-6">
+            <section className="rounded-3xl bg-ink p-5 text-mist">
+              <h2 className="text-lg font-semibold">Recommended for your profile</h2>
+              <div className="mt-4 space-y-3">
+                {recommended.map((item) => (
+                  <Link key={item.id} href={`/opportunities/${item.slug}`} className="block rounded-2xl bg-white/10 p-4">
+                    <p className="font-medium">{item.title}</p>
+                    <p className="mt-1 text-sm text-mint">{item.organization}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/60 bg-white/90 p-5">
+              <h2 className="text-lg font-semibold text-ink">Notifications</h2>
+              <div className="mt-4 space-y-3">
+                {notifications.map((item) => (
+                  <div key={item.id} className="rounded-2xl bg-mist p-4">
+                    <p className="font-medium text-ink">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/60 bg-white/90 p-5">
+              <h2 className="text-lg font-semibold text-ink">Community pulse</h2>
+              <div className="mt-4 space-y-3">
+                {threads.map((thread) => (
+                  <div key={thread.id} className="rounded-2xl bg-mist p-4">
+                    <p className="font-medium text-ink">{thread.title}</p>
+                    <p className="mt-1 text-sm text-slate">
+                      {thread.category} | {thread.author_name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
