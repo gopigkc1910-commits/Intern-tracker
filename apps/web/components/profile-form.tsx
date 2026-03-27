@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { getBrowserAuthToken, updateProfile } from "../lib/api";
+import { clientJsonFetch } from "../lib/client-json";
 import type { UserProfile } from "../lib/types";
 
 function fromCommaList(value: string) {
@@ -42,31 +42,31 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
       onSubmit={(event) => {
         event.preventDefault();
         startTransition(async () => {
-          const token = getBrowserAuthToken();
-          if (!token) {
-            setMessage("Sign in first to save profile changes.");
-            return;
-          }
-
           try {
-            await updateProfile(token, {
-              full_name: formState.full_name,
-              college_name: formState.college_name,
-              degree: formState.degree,
-              branch: formState.branch,
-              graduation_year: formState.graduation_year ? Number(formState.graduation_year) : null,
-              city: formState.city,
-              country: formState.country,
-              bio: formState.bio,
-              goals: formState.goals,
-              preferred_domains: fromCommaList(formState.preferred_domains),
-              preferred_locations: fromCommaList(formState.preferred_locations),
-              preferred_opportunity_types: fromCommaList(formState.preferred_opportunity_types),
-              skills: fromCommaList(formState.skills),
-              github_url: formState.github_url,
-              linkedin_url: formState.linkedin_url,
-              resume_url: formState.resume_url,
-              onboarding_completed: true
+            await clientJsonFetch<UserProfile>("/api/profile", {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                full_name: formState.full_name,
+                college_name: formState.college_name,
+                degree: formState.degree,
+                branch: formState.branch,
+                graduation_year: formState.graduation_year ? Number(formState.graduation_year) : null,
+                city: formState.city,
+                country: formState.country,
+                bio: formState.bio,
+                goals: formState.goals,
+                preferred_domains: fromCommaList(formState.preferred_domains),
+                preferred_locations: fromCommaList(formState.preferred_locations),
+                preferred_opportunity_types: fromCommaList(formState.preferred_opportunity_types),
+                skills: fromCommaList(formState.skills),
+                github_url: formState.github_url,
+                linkedin_url: formState.linkedin_url,
+                resume_url: formState.resume_url,
+                onboarding_completed: true
+              })
             });
             setMessage("Profile saved. Recommendations will reflect the new preferences.");
             router.refresh();

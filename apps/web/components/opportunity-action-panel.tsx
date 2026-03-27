@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { createApplication, getBrowserAuthToken, updateApplication } from "../lib/api";
+import { clientJsonFetch } from "../lib/client-json";
 import type { ApplicationRecord } from "../lib/types";
 
 type OpportunityActionPanelProps = {
@@ -21,17 +21,23 @@ export function OpportunityActionPanel({
 
   const runAction = (status: "saved" | "applied") => {
     startTransition(async () => {
-      const token = getBrowserAuthToken();
-      if (!token) {
-        setMessage("Sign in to save or apply. Guests can still browse freely.");
-        return;
-      }
-
       try {
         if (existingApplication) {
-          await updateApplication(token, existingApplication.id, { status });
+          await clientJsonFetch<ApplicationRecord>(`/api/applications/${existingApplication.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ status })
+          });
         } else {
-          await createApplication(token, { opportunity_id: opportunityId, status });
+          await clientJsonFetch<ApplicationRecord>("/api/applications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ opportunity_id: opportunityId, status })
+          });
         }
         setMessage(status === "saved" ? "Saved to your tracker." : "Application marked as submitted.");
         router.refresh();

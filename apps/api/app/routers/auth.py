@@ -1,17 +1,20 @@
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.demo_store import DEMO_STORE
 from app.db import get_db
+from app.deps import extract_bearer_token, get_current_user
 from app.models import AuthChallenge
 from app.schemas import (
     AuthProvider,
     AuthProvidersResponse,
     AuthResponse,
+    LogoutResponse,
     RequestOtpRequest,
     RequestOtpResponse,
     VerifyOtpRequest,
@@ -22,6 +25,7 @@ from app.services import (
     get_user_by_identifier,
     hash_otp,
     mask_identifier,
+    revoke_session_by_token,
     to_user_profile_response,
     use_demo_store,
 )
@@ -72,6 +76,24 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
     phone = payload.phone.strip() if payload.phone else None
     if not email and not phone:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or phone is required")
+
+    window_start = datetime.now(UTC) - timedelta(minutes=settings.auth_otp_request_window_minutes)
+    filters = []
+    if email:
+        filters.append(AuthChallenge.email == email)
+    if phone:
+        filters.append(AuthChallenge.phone == phone)
+    recent_requests = db.scalar(
+        select(func.count(AuthChallenge.id)).where(
+            or_(*filters),
+            AuthChallenge.created_at >= window_start,
+        )
+    )
+    if recent_requests and recent_requests >= settings.auth_otp_request_limit:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many OTP requests. Please wait before trying again.",
+        )
 
     channel = "email" if email else "phone"
     code = "000000" if settings.auth_debug else f"{secrets.randbelow(1000000):06d}"
@@ -136,3 +158,17 @@ def verify_otp(payload: VerifyOtpRequest, db: Session = Depends(get_db)) -> Auth
         refresh_token=session.token,
         user=to_user_profile_response(user),
     )
+
+
+@router.post("/auth/logout", response_model=LogoutResponse)
+def logout(
+    authorization: str | None = Header(default=None),
+    x_demo_token: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),
+) -> LogoutResponse:
+    token = extract_bearer_token(authorization, x_demo_token)
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    revoke_session_by_token(db, token)
+    return LogoutResponse(message="Session revoked")

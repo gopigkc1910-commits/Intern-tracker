@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { deleteApplication, getBrowserAuthToken, updateApplication } from "../lib/api";
+import { clientJsonFetch } from "../lib/client-json";
 import type { ApplicationRecord } from "../lib/types";
 
 const STATUSES = ["saved", "applied", "shortlisted", "rejected", "accepted"] as const;
@@ -15,13 +15,14 @@ export function ApplicationStatusBoardPolished({ items }: { items: ApplicationRe
 
   const updateStatus = (applicationId: string, status: (typeof STATUSES)[number]) => {
     startTransition(async () => {
-      const token = getBrowserAuthToken();
-      if (!token) {
-        setMessage("Sign in again to manage your tracker.");
-        return;
-      }
       try {
-        await updateApplication(token, applicationId, { status });
+        await clientJsonFetch<ApplicationRecord>(`/api/applications/${applicationId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ status })
+        });
         setMessage("Tracker updated.");
         router.refresh();
       } catch {
@@ -32,13 +33,10 @@ export function ApplicationStatusBoardPolished({ items }: { items: ApplicationRe
 
   const removeItem = (applicationId: string) => {
     startTransition(async () => {
-      const token = getBrowserAuthToken();
-      if (!token) {
-        setMessage("Sign in again to manage your tracker.");
-        return;
-      }
       try {
-        await deleteApplication(token, applicationId);
+        await clientJsonFetch<{ message: string }>(`/api/applications/${applicationId}`, {
+          method: "DELETE"
+        });
         setMessage("Item removed from tracker.");
         router.refresh();
       } catch {

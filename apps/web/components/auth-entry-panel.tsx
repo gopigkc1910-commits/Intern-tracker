@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import { AUTH_TOKEN_COOKIE, getAuthProviders, requestOtp, verifyOtp } from "../lib/api";
+import { getAuthProviders, requestOtp } from "../lib/api";
+import { clientJsonFetch } from "../lib/client-json";
 import type { AuthProvider } from "../lib/types";
 
 type AuthEntryPanelProps = {
@@ -117,13 +118,18 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
             onClick={() => {
               startTransition(async () => {
                 try {
-                  const response = await verifyOtp({
-                    challenge_id: challengeId,
-                    otp: otp.trim(),
-                    full_name: fullName.trim() || undefined,
-                    ...payload
+                  await clientJsonFetch<{ user: unknown }>("/api/auth/session", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                      challenge_id: challengeId,
+                      otp: otp.trim(),
+                      full_name: fullName.trim() || undefined,
+                      ...payload
+                    })
                   });
-                  document.cookie = `${AUTH_TOKEN_COOKIE}=${encodeURIComponent(response.access_token)}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
                   router.push(redirectTo);
                   router.refresh();
                 } catch {

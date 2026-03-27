@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     auth_debug: bool = False
     auth_otp_ttl_minutes: int = 10
     auth_session_ttl_days: int = 30
+    auth_otp_request_limit: int = 5
+    auth_otp_request_window_minutes: int = 15
+    admin_token: str | None = None
     google_oauth_url: str | None = None
     github_oauth_url: str | None = None
     linkedin_oauth_url: str | None = None

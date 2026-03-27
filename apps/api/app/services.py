@@ -330,6 +330,16 @@ def create_session(db: Session, user: User, provider: str = "otp") -> AuthSessio
     return session
 
 
+def revoke_session_by_token(db: Session, token: str) -> bool:
+    session = db.scalar(select(AuthSession).where(AuthSession.token == token, AuthSession.revoked_at.is_(None)))
+    if session is None:
+        return False
+    session.revoked_at = datetime.now(UTC)
+    db.add(session)
+    db.commit()
+    return True
+
+
 def get_user_by_identifier(db: Session, *, email: str | None = None, phone: str | None = None) -> User | None:
     if email:
         return db.scalar(select(User).options(joinedload(User.profile)).where(User.email == email))

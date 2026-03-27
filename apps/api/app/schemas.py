@@ -133,6 +133,10 @@ class AuthResponse(BaseModel):
     user: UserProfileResponse
 
 
+class LogoutResponse(BaseModel):
+    message: str
+
+
 class MessageResponse(BaseModel):
     message: str
 
@@ -174,6 +178,27 @@ class AnalyticsOverviewResponse(BaseModel):
     new_opportunities: int
     saved_applications: int
     applied_applications: int
+
+
+class AdminUserSummary(BaseModel):
+    id: UUID
+    email: str | None = None
+    phone: str | None = None
+    full_name: str
+    college_name: str | None = None
+    degree: str | None = None
+    branch: str | None = None
+    graduation_year: int | None = None
+    city: str | None = None
+    country: str | None = None
+    onboarding_completed: bool
+    applications_count: int
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class AdminUsersResponse(BaseModel):
+    items: list[AdminUserSummary]
 
 
 class ResumeAnalyzeRequest(BaseModel):

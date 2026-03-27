@@ -16,12 +16,13 @@ const API_ROOT =
 const API_TIMEOUT_MS = 4000;
 
 export const AUTH_TOKEN_COOKIE = "intern_tracker_auth_token";
+export const AUTH_TOKEN_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 type FetchOptions = RequestInit & {
   token?: string | null;
 };
 
-async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
   if (options.token) {
@@ -49,21 +50,18 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
   clearTimeout(timeout);
 
   if (!response.ok) {
-    const detail = await response.text();
+    const rawDetail = await response.text();
+    let detail = rawDetail;
+    try {
+      const parsed = JSON.parse(rawDetail) as { detail?: string };
+      detail = parsed.detail ?? rawDetail;
+    } catch {
+      detail = rawDetail;
+    }
     throw new Error(detail || `API request failed with ${response.status}`);
   }
 
   return response.json() as Promise<T>;
-}
-
-export function getBrowserAuthToken(): string | null {
-  if (typeof document === "undefined") {
-    return null;
-  }
-  const cookie = document.cookie
-    .split("; ")
-    .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`));
-  return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
 }
 
 export async function getAuthProviders(): Promise<AuthProvider[]> {

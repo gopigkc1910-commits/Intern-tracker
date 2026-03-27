@@ -94,3 +94,20 @@ export type AnalyticsOverview = {
   saved_applications: number;
   applied_applications: number;
 };
+
+export type AdminUserSummary = {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  full_name: string;
+  college_name: string | null;
+  degree: string | null;
+  branch: string | null;
+  graduation_year: number | null;
+  city: string | null;
+  country: string | null;
+  onboarding_completed: boolean;
+  applications_count: number;
+  created_at: string;
+  updated_at: string | null;
+};

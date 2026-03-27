@@ -15,6 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const cookieStore = cookies();
   const theme = cookieStore.get("intern_tracker_theme")?.value === "dark" ? "dark" : "light";
   const isAuthenticated = Boolean(cookieStore.get(AUTH_TOKEN_COOKIE)?.value);
+  const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
 
   return (
     <html lang="en" data-theme={theme}>
@@ -25,7 +26,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <div className="text-xs uppercase tracking-[0.3em] text-teal">Intern Radar</div>
               <div className="text-sm text-slate">Production-ready opportunity discovery and tracking baseline</div>
             </div>
-            <ShellActions initialTheme={theme} initialAuthenticated={isAuthenticated} />
+            <ShellActions
+              initialTheme={theme}
+              initialAuthenticated={isAuthenticated}
+              showAdminLink={showAdminLink}
+            />
           </div>
         </div>
         {children}

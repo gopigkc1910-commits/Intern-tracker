@@ -4,7 +4,6 @@ import { AppHeader } from "../../components/app-header";
 import { ApplicationStatusBoardPolished } from "../../components/application-status-board-polished";
 import { AuthEntryPanel } from "../../components/auth-entry-panel";
 import {
-  getAnalytics,
   getApplications,
   getNotifications,
   getProfile,
@@ -13,7 +12,6 @@ import {
 } from "../../lib/api";
 import { getServerAuthToken } from "../../lib/session";
 import type {
-  AnalyticsOverview,
   ApplicationRecord,
   NotificationItem,
   OpportunitySummary,
@@ -49,16 +47,14 @@ export default async function DashboardPage() {
   let recommended: OpportunitySummary[];
   let notifications: NotificationItem[];
   let threads: ThreadItem[];
-  let analytics: AnalyticsOverview;
 
   try {
-    [profile, applications, recommended, notifications, threads, analytics] = await Promise.all([
+    [profile, applications, recommended, notifications, threads] = await Promise.all([
       getProfile(token),
       getApplications(token),
       getRecommendedOpportunities(token),
       getNotifications(),
-      getThreads(),
-      getAnalytics()
+      getThreads()
     ]);
   } catch {
     return (
@@ -107,7 +103,7 @@ export default async function DashboardPage() {
             ["Applications", applications.length.toString()],
             ["Saved", savedCount.toString()],
             ["In play", activeCount.toString()],
-            ["Platform opportunities", analytics.new_opportunities.toString()]
+            ["Recommendations", recommended.length.toString()]
           ].map(([label, value]) => (
             <div key={label} className="rounded-3xl border border-white/60 bg-white/90 p-5">
               <p className="text-sm text-slate">{label}</p>

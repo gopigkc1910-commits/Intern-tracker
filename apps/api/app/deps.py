@@ -11,16 +11,23 @@ from app.models import AuthSession, User
 from app.services import get_demo_user, use_demo_store
 
 
+def extract_bearer_token(
+    authorization: str | None = None,
+    x_demo_token: str | None = None,
+) -> str | None:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:]
+    if x_demo_token:
+        return x_demo_token
+    return None
+
+
 def get_current_user(
     authorization: str | None = Header(default=None),
     x_demo_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ) -> User:
-    token: str | None = None
-    if authorization and authorization.lower().startswith("bearer "):
-        token = authorization[7:]
-    elif x_demo_token:
-        token = x_demo_token
+    token = extract_bearer_token(authorization, x_demo_token)
 
     if use_demo_store():
         if token != settings.demo_token:
@@ -43,3 +50,13 @@ def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session")
 
     return session.user
+
+
+def require_admin(x_admin_token: str | None = Header(default=None)) -> None:
+    if not settings.admin_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin access is not configured",
+        )
+    if x_admin_token != settings.admin_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin token")
