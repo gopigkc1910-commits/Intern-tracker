@@ -5,6 +5,9 @@ import type { ReactNode } from "react";
 
 import { AUTH_TOKEN_COOKIE } from "../lib/api";
 import { BrandMark } from "../components/brand-mark";
+import { CommandBar } from "../components/command-bar";
+import { CompareTray } from "../components/compare-tray";
+import { MobileBottomNav } from "../components/mobile-bottom-nav";
 import { ShellActions } from "../components/shell-actions";
 
 export const metadata: Metadata = {
@@ -24,14 +27,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="page-shell pb-0 pt-5">
           <div className="mb-4 flex flex-col gap-4 rounded-full border border-white/60 bg-white/70 px-5 py-3 backdrop-blur md:flex-row md:items-center md:justify-between">
             <BrandMark compact />
-            <ShellActions
-              initialTheme={theme}
-              initialAuthenticated={isAuthenticated}
-              showAdminLink={showAdminLink}
-            />
+            <div className="flex items-center gap-3">
+              <CommandBar />
+              <ShellActions
+                initialTheme={theme}
+                initialAuthenticated={isAuthenticated}
+                showAdminLink={showAdminLink}
+              />
+            </div>
           </div>
         </div>
         {children}
+        <CompareTray />
+        <MobileBottomNav />
       </body>
     </html>
   );

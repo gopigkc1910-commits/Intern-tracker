@@ -1,14 +1,17 @@
 import Link from "next/link";
 
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
+import { ApplicationKanbanBoard } from "../../components/application-kanban-board";
 import { AppHeader } from "../../components/app-header";
-import { ApplicationStatusBoardPolished } from "../../components/application-status-board-polished";
 import { AuthEntryPanel } from "../../components/auth-entry-panel";
+import { ProfileCompletionCard } from "../../components/profile-completion-card";
+import { SavedSearchesPanel } from "../../components/saved-searches-panel";
 import {
   getApplications,
   getNotifications,
   getProfile,
   getRecommendedOpportunities,
+  getSavedSearches,
   getThreads
 } from "../../lib/api";
 import { getServerAuthToken } from "../../lib/session";
@@ -16,6 +19,7 @@ import type {
   ApplicationRecord,
   NotificationItem,
   OpportunitySummary,
+  SavedSearch,
   ThreadItem,
   UserProfile
 } from "../../lib/types";
@@ -47,14 +51,16 @@ export default async function DashboardPage() {
   let applications: ApplicationRecord[];
   let recommended: OpportunitySummary[];
   let notifications: NotificationItem[];
+  let savedSearches: SavedSearch[];
   let threads: ThreadItem[];
 
   try {
-    [profile, applications, recommended, notifications, threads] = await Promise.all([
+    [profile, applications, recommended, notifications, savedSearches, threads] = await Promise.all([
       getProfile(token),
       getApplications(token),
       getRecommendedOpportunities(token),
-      getNotifications(),
+      getNotifications(token),
+      getSavedSearches(token),
       getThreads()
     ]);
   } catch {
@@ -118,7 +124,7 @@ export default async function DashboardPage() {
           <div className="space-y-6">
             <section>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-ink">Application tracker</h2>
+                <h2 className="text-xl font-semibold text-ink">Application pipeline</h2>
                 <Link href="/opportunities" className="text-sm font-medium text-teal">
                   Add more
                 </Link>
@@ -128,12 +134,24 @@ export default async function DashboardPage() {
                   Your tracker is empty. Save one opportunity from the feed to start building your pipeline.
                 </div>
               ) : (
-                <ApplicationStatusBoardPolished items={applications} />
+                <ApplicationKanbanBoard items={applications} />
               )}
+            </section>
+
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-ink">Saved searches</h2>
+                <Link href="/opportunities" className="text-sm font-medium text-teal">
+                  Create one
+                </Link>
+              </div>
+              <SavedSearchesPanel items={savedSearches} />
             </section>
           </div>
 
           <div className="space-y-6">
+            <ProfileCompletionCard profile={profile} />
+
             <section className="rounded-3xl bg-ink p-5 text-mist">
               <h2 className="text-lg font-semibold">Recommended for your profile</h2>
               <div className="mt-4 space-y-3">
@@ -148,14 +166,20 @@ export default async function DashboardPage() {
 
             <section className="rounded-3xl border border-white/60 bg-white/90 p-5">
               <h2 className="text-lg font-semibold text-ink">Notifications</h2>
-              <div className="mt-4 space-y-3">
-                {notifications.map((item) => (
-                  <div key={item.id} className="rounded-2xl bg-mist p-4">
-                    <p className="font-medium text-ink">{item.title}</p>
-                    <p className="mt-1 text-sm text-slate">{item.detail}</p>
-                  </div>
-                ))}
-              </div>
+              {notifications.length === 0 ? (
+                <div className="mt-4 rounded-2xl bg-mist p-4 text-sm text-slate">
+                  No urgent reminders right now. Your next alerts will appear here.
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {notifications.map((item) => (
+                    <div key={item.id} className="rounded-2xl bg-mist p-4">
+                      <p className="font-medium text-ink">{item.title}</p>
+                      <p className="mt-1 text-sm text-slate">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="rounded-3xl border border-white/60 bg-white/90 p-5">

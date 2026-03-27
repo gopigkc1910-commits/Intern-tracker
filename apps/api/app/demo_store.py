@@ -16,6 +16,7 @@ from app.schemas import (
     OpportunityDetail,
     OpportunitySummary,
     ResumeAnalyzeResponse,
+    SavedSearchResponse,
     ThreadItem,
     UserProfileResponse,
 )
@@ -234,6 +235,7 @@ class DemoStore:
                 tags=item["tags"],
                 deadline_at=item["deadline_at"],
                 is_verified=item["is_verified"],
+                status="published",
                 description=item["description"],
                 application_url=item["application_url"],
                 eligibility_text=item["eligibility_text"],
@@ -273,11 +275,21 @@ class DemoStore:
             ),
         ]
         self.feedback_items: list[FeedbackSubmissionResponse] = []
+        self.saved_searches: list[SavedSearchResponse] = []
 
     def to_summary(self, opportunity: OpportunityDetail) -> OpportunitySummary:
         return OpportunitySummary(**opportunity.model_dump(exclude={"application_url", "eligibility_text", "required_skills", "stipend_min", "stipend_max", "currency"}))
 
-    def list_opportunities(self, search: str | None = None, opportunity_type: str | None = None, mode: str | None = None) -> list[OpportunitySummary]:
+    def list_opportunities(
+        self,
+        search: str | None = None,
+        opportunity_type: str | None = None,
+        mode: str | None = None,
+        verified_only: bool = False,
+        deadline_days: int | None = None,
+        paid_only: bool = False,
+        min_stipend: float | None = None,
+    ) -> list[OpportunitySummary]:
         items = self.opportunities
         if search:
             term = search.lower()
@@ -293,6 +305,20 @@ class DemoStore:
             items = [item for item in items if item.type == opportunity_type]
         if mode:
             items = [item for item in items if item.mode.lower() == mode.lower()]
+        if verified_only:
+            items = [item for item in items if item.is_verified]
+        if paid_only:
+            items = [item for item in items if item.stipend_min is not None or item.stipend_max is not None]
+        if min_stipend is not None:
+            items = [
+                item
+                for item in items
+                if (item.stipend_min is not None and item.stipend_min >= min_stipend)
+                or (item.stipend_max is not None and item.stipend_max >= min_stipend)
+            ]
+        if deadline_days is not None:
+            cutoff = datetime.now(UTC) + timedelta(days=deadline_days)
+            items = [item for item in items if item.deadline_at is not None and item.deadline_at <= cutoff]
         items = sorted(items, key=lambda item: item.deadline_at or datetime.max.replace(tzinfo=UTC))
         return [self.to_summary(item) for item in items]
 
@@ -301,6 +327,71 @@ class DemoStore:
             if item.slug == slug:
                 return item
         return None
+
+    def list_admin_opportunities(self) -> list[OpportunityDetail]:
+        return deepcopy(self.opportunities)
+
+    def create_opportunity(self, payload: dict) -> OpportunityDetail:
+        slug_base = payload.get("slug") or payload["title"].lower().replace(" ", "-")
+        slug = slug_base
+        index = 2
+        existing_slugs = {item.slug for item in self.opportunities}
+        while slug in existing_slugs:
+            slug = f"{slug_base}-{index}"
+            index += 1
+
+        item = OpportunityDetail(
+            id=uuid4(),
+            slug=slug,
+            title=payload["title"],
+            organization=payload["organization"],
+            type=payload["type"],
+            domain=payload["domain"],
+            mode=payload["mode"],
+            location_text=payload.get("location_text"),
+            tags=payload.get("tags", []),
+            deadline_at=payload.get("deadline_at"),
+            is_verified=payload.get("is_verified", False),
+            status=payload.get("status", "published"),
+            description=payload["description"],
+            application_url=payload["application_url"],
+            eligibility_text=payload.get("eligibility_text"),
+            required_skills=payload.get("required_skills", []),
+            stipend_min=payload.get("stipend_min"),
+            stipend_max=payload.get("stipend_max"),
+            currency=payload.get("currency"),
+        )
+        self.opportunities.insert(0, item)
+        return deepcopy(item)
+
+    def update_opportunity(self, opportunity_id: UUID, payload: dict) -> OpportunityDetail:
+        for item in self.opportunities:
+            if item.id == opportunity_id:
+                for field, value in payload.items():
+                    if hasattr(item, field):
+                        setattr(item, field, value)
+                return deepcopy(item)
+        raise KeyError("Opportunity not found")
+
+    def delete_opportunity(self, opportunity_id: UUID) -> None:
+        self.opportunities = [item for item in self.opportunities if item.id != opportunity_id]
+
+    def update_feedback_status(self, feedback_id: UUID, status: str) -> AdminFeedbackItem:
+        for item in self.feedback_items:
+            if item.id == feedback_id:
+                item.status = status
+                return AdminFeedbackItem(
+                    id=item.id,
+                    category=item.category,
+                    message=item.message,
+                    name=item.name,
+                    email=item.email,
+                    status=item.status,
+                    created_at=item.created_at,
+                    user_id=self.user.id,
+                    user_name=self.user.full_name,
+                )
+        raise KeyError("Feedback not found")
 
     def get_recommended(self) -> list[OpportunitySummary]:
         preferred_domains = set(self.user.preferred_domains)
@@ -431,6 +522,28 @@ class DemoStore:
                 detail="A product engineering internship now matches your profile.",
             ),
         ]
+
+    def list_saved_searches(self) -> list[SavedSearchResponse]:
+        return deepcopy(self.saved_searches)
+
+    def create_saved_search(self, payload: dict) -> SavedSearchResponse:
+        item = SavedSearchResponse(
+            id=uuid4(),
+            label=payload["label"],
+            search=payload.get("search"),
+            type=payload.get("type"),
+            mode=payload.get("mode"),
+            verified=payload.get("verified", False),
+            deadline_days=payload.get("deadline_days"),
+            paid_only=payload.get("paid_only", False),
+            min_stipend=payload.get("min_stipend"),
+            created_at=datetime.now(UTC),
+        )
+        self.saved_searches.insert(0, item)
+        return deepcopy(item)
+
+    def delete_saved_search(self, saved_search_id: UUID) -> None:
+        self.saved_searches = [item for item in self.saved_searches if item.id != saved_search_id]
 
     def threads(self) -> list[ThreadItem]:
         return [

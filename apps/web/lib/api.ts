@@ -9,6 +9,7 @@ import type {
   OpportunityDetail,
   OpportunitySummary,
   RequestOtpResponse,
+  SavedSearch,
   ThreadItem,
   UserProfile
 } from "./types";
@@ -98,11 +99,19 @@ export async function listOpportunities(params?: {
   search?: string;
   type?: string;
   mode?: string;
+  verified?: string;
+  deadline_days?: string;
+  paid_only?: string;
+  min_stipend?: string;
 }): Promise<OpportunitySummary[]> {
   const query = new URLSearchParams();
   if (params?.search) query.set("search", params.search);
   if (params?.type) query.set("type", params.type);
   if (params?.mode) query.set("mode", params.mode);
+  if (params?.verified) query.set("verified", params.verified);
+  if (params?.deadline_days) query.set("deadline_days", params.deadline_days);
+  if (params?.paid_only) query.set("paid_only", params.paid_only);
+  if (params?.min_stipend) query.set("min_stipend", params.min_stipend);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   const response = await apiFetch<{ items: OpportunitySummary[] }>(`/opportunities${suffix}`);
   return response.items;
@@ -161,8 +170,8 @@ export async function updateProfile(token: string, payload: Partial<UserProfile>
   });
 }
 
-export async function getNotifications(): Promise<NotificationItem[]> {
-  const response = await apiFetch<{ items: NotificationItem[] }>("/notifications");
+export async function getNotifications(token: string): Promise<NotificationItem[]> {
+  const response = await apiFetch<{ items: NotificationItem[] }>("/notifications", { token });
   return response.items;
 }
 
@@ -183,5 +192,37 @@ export async function submitFeedback(
     method: "POST",
     token,
     body: JSON.stringify(payload)
+  });
+}
+
+export async function getSavedSearches(token: string): Promise<SavedSearch[]> {
+  const response = await apiFetch<{ items: SavedSearch[] }>("/saved-searches", { token });
+  return response.items;
+}
+
+export async function createSavedSearch(
+  token: string,
+  payload: {
+    label: string;
+    search?: string;
+    type?: string;
+    mode?: string;
+    verified?: boolean;
+    deadline_days?: number;
+    paid_only?: boolean;
+    min_stipend?: number;
+  }
+) {
+  return apiFetch<SavedSearch>("/saved-searches", {
+    method: "POST",
+    token,
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteSavedSearch(token: string, savedSearchId: string) {
+  return apiFetch<{ message: string }>(`/saved-searches/${savedSearchId}`, {
+    method: "DELETE",
+    token
   });
 }

@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { AdminFeedbackTriage } from "../../components/admin-feedback-triage";
+import { AdminOpportunityManager } from "../../components/admin-opportunity-manager";
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
-import { getAdminFeedback, getAdminOverview, getAdminUsers } from "../../lib/admin";
+import { getAdminFeedback, getAdminOpportunities, getAdminOverview, getAdminUsers } from "../../lib/admin";
 import { getServerAuthToken } from "../../lib/session";
-import type { AdminFeedbackItem, AdminUserSummary, AnalyticsOverview } from "../../lib/types";
+import type { AdminFeedbackItem, AdminUserSummary, AnalyticsOverview, OpportunityDetail } from "../../lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +23,14 @@ export default async function AdminPage() {
   let overview: AnalyticsOverview;
   let users: AdminUserSummary[];
   let feedbackItems: AdminFeedbackItem[];
+  let opportunities: OpportunityDetail[];
 
   try {
-    [overview, { items: users }, { items: feedbackItems }] = await Promise.all([
+    [overview, { items: users }, { items: feedbackItems }, { items: opportunities }] = await Promise.all([
       getAdminOverview(),
       getAdminUsers(),
-      getAdminFeedback()
+      getAdminFeedback(),
+      getAdminOpportunities()
     ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Admin data is unavailable.";
@@ -56,7 +60,7 @@ export default async function AdminPage() {
   const completedUsers = users.filter((user) => user.onboarding_completed).length;
   const incompleteUsers = users.length - completedUsers;
   const recentUsers = users.slice(0, 4);
-  const recentFeedback = feedbackItems.slice(0, 5);
+  const recentFeedback = feedbackItems.slice(0, 8);
 
   return (
     <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
@@ -212,30 +216,12 @@ export default async function AdminPage() {
             <p className="text-sm text-slate">{feedbackItems.length} submissions</p>
           </div>
 
-          {recentFeedback.length === 0 ? (
-            <div className="mt-6 rounded-[24px] bg-mist p-5 text-sm text-slate">
-              No feedback has been submitted yet. The new feedback form will populate this inbox automatically.
-            </div>
-          ) : (
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              {recentFeedback.map((item) => (
-                <article key={item.id} className="rounded-[24px] bg-mist p-5">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-teal">
-                      {item.category}
-                    </span>
-                    <span className="text-xs uppercase tracking-[0.18em] text-slate">{formatDate(item.created_at)}</span>
-                  </div>
-                  <p className="mt-4 text-sm leading-7 text-ink">{item.message}</p>
-                  <div className="mt-4 text-sm text-slate">
-                    <div>{item.name ?? item.user_name ?? "Anonymous visitor"}</div>
-                    <div>{item.email ?? "No email provided"}</div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+          <AdminFeedbackTriage items={recentFeedback} />
         </section>
+
+        <div className="mt-8">
+          <AdminOpportunityManager opportunities={opportunities} />
+        </div>
       </section>
     </AppSidebarShell>
   );

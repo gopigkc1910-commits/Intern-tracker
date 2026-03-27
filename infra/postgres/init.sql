@@ -96,8 +96,23 @@ create table if not exists feedback_submissions (
   created_at timestamptz not null default now()
 );
 
+create table if not exists saved_searches (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  label varchar(255) not null,
+  search varchar(255),
+  type varchar(50),
+  mode varchar(30),
+  verified boolean not null default false,
+  deadline_days int,
+  paid_only boolean not null default false,
+  min_stipend numeric(10,2),
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_opportunities_type on opportunities(type);
 create index if not exists idx_opportunities_domain on opportunities(domain);
 create index if not exists idx_opportunities_deadline on opportunities(deadline_at);
 create index if not exists idx_applications_user on applications(user_id);
 create index if not exists idx_feedback_created_at on feedback_submissions(created_at);
+create index if not exists idx_saved_searches_user on saved_searches(user_id);

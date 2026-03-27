@@ -22,12 +22,33 @@ def list_opportunities(
     search: str | None = Query(default=None),
     type: str | None = Query(default=None),
     mode: str | None = Query(default=None),
+    verified: bool = Query(default=False),
+    deadline_days: int | None = Query(default=None),
+    paid_only: bool = Query(default=False),
+    min_stipend: float | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> OpportunityListResponse:
     if use_demo_store():
-        items = DEMO_STORE.list_opportunities(search=search, opportunity_type=type, mode=mode)
+        items = DEMO_STORE.list_opportunities(
+            search=search,
+            opportunity_type=type,
+            mode=mode,
+            verified_only=verified,
+            deadline_days=deadline_days,
+            paid_only=paid_only,
+            min_stipend=min_stipend,
+        )
         return OpportunityListResponse(items=items)
-    items = fetch_opportunities(db, search=search, opportunity_type=type, mode=mode)
+    items = fetch_opportunities(
+        db,
+        search=search,
+        opportunity_type=type,
+        mode=mode,
+        verified_only=verified,
+        deadline_days=deadline_days,
+        paid_only=paid_only,
+        min_stipend=min_stipend,
+    )
     return OpportunityListResponse(items=[to_opportunity_summary(item) for item in items])
 
 

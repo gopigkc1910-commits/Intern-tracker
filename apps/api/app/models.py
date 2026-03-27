@@ -165,3 +165,21 @@ class FeedbackSubmission(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped[User | None] = relationship("User")
+
+
+class SavedSearch(Base):
+    __tablename__ = "saved_searches"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    label: Mapped[str] = mapped_column(String(255))
+    search: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    mode: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    deadline_days: Mapped[int | None] = mapped_column(nullable=True)
+    paid_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    min_stipend: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship("User")

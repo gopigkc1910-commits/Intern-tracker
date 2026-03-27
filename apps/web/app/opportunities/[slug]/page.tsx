@@ -1,10 +1,12 @@
 import Link from "next/link";
 
 import { AppHeader } from "../../../components/app-header";
+import { CompareToggleButton } from "../../../components/compare-toggle-button";
 import { OpportunityActionPanel } from "../../../components/opportunity-action-panel";
-import { getApplications, getOpportunity } from "../../../lib/api";
+import { ResumeMatchCard } from "../../../components/resume-match-card";
+import { getApplications, getOpportunity, getProfile } from "../../../lib/api";
 import { getServerAuthToken } from "../../../lib/session";
-import type { OpportunityDetail } from "../../../lib/types";
+import type { OpportunityDetail, UserProfile } from "../../../lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,7 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
     );
   }
   const token = await getServerAuthToken();
+  const profile: UserProfile | null = token ? await getProfile(token).catch(() => null) : null;
   const applications = token ? await getApplications(token).catch(() => []) : [];
   const existingApplication = applications.find((item) => item.opportunity.id === opportunity.id);
 
@@ -89,7 +92,17 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
           </div>
 
           <div className="grid gap-5">
+            <ResumeMatchCard profile={profile} opportunity={opportunity} />
             <OpportunityActionPanel opportunityId={opportunity.id} existingApplication={existingApplication} />
+            <div className="rounded-3xl border border-teal/15 bg-white/90 p-5">
+              <h3 className="text-lg font-semibold text-ink">Compare this role</h3>
+              <p className="mt-2 text-sm leading-6 text-slate">
+                Add this opportunity to your comparison tray and review it side by side with up to two others.
+              </p>
+              <div className="mt-4">
+                <CompareToggleButton slug={opportunity.slug} />
+              </div>
+            </div>
             <div className="rounded-3xl border border-teal/15 bg-white/90 p-5">
               <h3 className="text-lg font-semibold text-ink">Application link</h3>
               <p className="mt-2 text-sm leading-6 text-slate">

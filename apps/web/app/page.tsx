@@ -121,6 +121,40 @@ export default async function HomePage() {
             )}
           </div>
         </div>
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <section className="soft-card p-6">
+            <p className="section-heading">Why Students Stay</p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {[
+                ["Compare smarter", "Review internships, scholarships, and hackathons side by side before applying."],
+                ["Match faster", "See profile-based match signals once your profile is filled in."],
+                ["Save momentum", "Keep filters, deadlines, notes, and follow-ups in one system."]
+              ].map(([title, copy]) => (
+                <div key={title} className="rounded-[22px] bg-mist p-4">
+                  <p className="font-semibold text-ink">{title}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate">{copy}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[28px] bg-white/90 p-6 shadow-glow">
+            <p className="section-heading">Student Wins</p>
+            <div className="mt-5 grid gap-4">
+              {[
+                ["Backend intern shortlist", "Used saved searches plus the Kanban board to move from saved to shortlisted in one week."],
+                ["Hackathon team formation", "Tracked deadlines, compared events, and joined the right build sprint on time."],
+                ["Scholarship application rhythm", "Used reminders and profile matching to focus only on strong-fit programs."]
+              ].map(([title, copy]) => (
+                <div key={title} className="rounded-[22px] bg-mist p-4">
+                  <p className="font-semibold text-ink">{title}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate">{copy}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </section>
     </main>
   );

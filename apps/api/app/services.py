@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import secrets
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -28,6 +29,7 @@ from app.schemas import (
 )
 
 APPLICATION_STATUSES = {"saved", "applied", "shortlisted", "rejected", "accepted"}
+OPPORTUNITY_STATUSES = {"published", "draft", "archived"}
 STORAGE_MODE = "database"
 
 
@@ -49,6 +51,11 @@ def create_schema_and_seed(db: Session) -> None:
 
     Base.metadata.create_all(bind=engine)
     ensure_global_seed_data(db)
+
+
+def slugify_text(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or "opportunity"
 
 
 def ensure_global_seed_data(db: Session) -> None:
@@ -389,6 +396,7 @@ def to_opportunity_summary(opportunity: Opportunity) -> OpportunitySummary:
         tags=opportunity.tags or [],
         deadline_at=opportunity.deadline_at,
         is_verified=opportunity.is_verified,
+        status=opportunity.status,
         description=opportunity.description,
     )
 
@@ -452,7 +460,14 @@ def get_or_create_profile(user: User, db: Session) -> UserProfile:
 
 
 def list_opportunities(
-    db: Session, search: str | None = None, opportunity_type: str | None = None, mode: str | None = None
+    db: Session,
+    search: str | None = None,
+    opportunity_type: str | None = None,
+    mode: str | None = None,
+    verified_only: bool = False,
+    deadline_days: int | None = None,
+    paid_only: bool = False,
+    min_stipend: float | None = None,
 ) -> list[Opportunity]:
     query = (
         select(Opportunity)
@@ -473,6 +488,24 @@ def list_opportunities(
         query = query.where(Opportunity.type == opportunity_type)
     if mode:
         query = query.where(Opportunity.mode.ilike(mode))
+    if verified_only:
+        query = query.where(Opportunity.is_verified.is_(True))
+    if paid_only:
+        query = query.where(
+            or_(Opportunity.stipend_min.is_not(None), Opportunity.stipend_max.is_not(None))
+        )
+    if min_stipend is not None:
+        query = query.where(
+            or_(
+                Opportunity.stipend_min >= min_stipend,
+                Opportunity.stipend_max >= min_stipend,
+            )
+        )
+    if deadline_days is not None:
+        query = query.where(
+            Opportunity.deadline_at.is_not(None),
+            Opportunity.deadline_at <= datetime.now(UTC) + timedelta(days=deadline_days),
+        )
 
     query = query.order_by(
         case((Opportunity.deadline_at.is_(None), 1), else_=0),

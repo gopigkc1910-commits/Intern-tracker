@@ -10,6 +10,7 @@ export type OpportunitySummary = {
   tags: string[];
   deadline_at: string | null;
   is_verified: boolean;
+  status: string;
   description: string;
 };
 
@@ -125,4 +126,17 @@ export type FeedbackSubmission = {
 export type AdminFeedbackItem = FeedbackSubmission & {
   user_id: string | null;
   user_name: string | null;
+};
+
+export type SavedSearch = {
+  id: string;
+  label: string;
+  search: string | null;
+  type: string | null;
+  mode: string | null;
+  verified: boolean;
+  deadline_days: number | null;
+  paid_only: boolean;
+  min_stipend: number | null;
+  created_at: string;
 };

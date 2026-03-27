@@ -20,6 +20,7 @@ class OpportunitySummary(BaseModel):
     tags: list[str]
     deadline_at: datetime | None = None
     is_verified: bool
+    status: str = "published"
     description: str
 
 
@@ -232,6 +233,58 @@ class AdminFeedbackItem(BaseModel):
 
 class AdminFeedbackResponse(BaseModel):
     items: list[AdminFeedbackItem]
+
+
+class AdminOpportunityPayload(BaseModel):
+    title: str = Field(min_length=3, max_length=255)
+    organization: str = Field(min_length=2, max_length=255)
+    type: str = Field(min_length=3, max_length=50)
+    domain: str = Field(min_length=2, max_length=100)
+    mode: str = Field(min_length=3, max_length=30)
+    location_text: str | None = None
+    description: str = Field(min_length=10, max_length=5000)
+    application_url: str = Field(min_length=8, max_length=2000)
+    eligibility_text: str | None = None
+    required_skills: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    stipend_min: float | None = None
+    stipend_max: float | None = None
+    currency: str | None = None
+    deadline_at: datetime | None = None
+    is_verified: bool = False
+    status: str = "published"
+
+
+class UpdateFeedbackStatusRequest(BaseModel):
+    status: str = Field(min_length=2, max_length=30)
+
+
+class SavedSearchResponse(BaseModel):
+    id: UUID
+    label: str
+    search: str | None = None
+    type: str | None = None
+    mode: str | None = None
+    verified: bool = False
+    deadline_days: int | None = None
+    paid_only: bool = False
+    min_stipend: float | None = None
+    created_at: datetime
+
+
+class SavedSearchListResponse(BaseModel):
+    items: list[SavedSearchResponse]
+
+
+class CreateSavedSearchRequest(BaseModel):
+    label: str = Field(min_length=2, max_length=255)
+    search: str | None = None
+    type: str | None = None
+    mode: str | None = None
+    verified: bool = False
+    deadline_days: int | None = None
+    paid_only: bool = False
+    min_stipend: float | None = None
 
 
 class ResumeAnalyzeRequest(BaseModel):
