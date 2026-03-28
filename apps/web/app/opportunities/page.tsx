@@ -4,6 +4,7 @@ import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { CompareToggleButton } from "../../components/compare-toggle-button";
 import { SaveSearchButton } from "../../components/save-search-button";
+import { NoOpportunitiesEmpty, LoadingError } from "../../components/empty-state";
 import { getProfile, listOpportunities } from "../../lib/api";
 import { getServerAuthToken } from "../../lib/session";
 import type { OpportunitySummary, UserProfile } from "../../lib/types";
@@ -175,12 +176,16 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
         </form>
 
         {error ? (
-          <div className="mt-8 rounded-3xl border border-coral/20 bg-white/90 p-6 text-sm text-slate">
-            Could not load opportunities. Start the API and database, then refresh this page.
+          <div className="mt-8">
+            <LoadingError
+              title="Could not load opportunities"
+              description="Start the API and database, then refresh this page."
+              onRetry={() => window.location.reload()}
+            />
           </div>
         ) : items.length === 0 ? (
-          <div className="mt-8 rounded-3xl border border-teal/10 bg-white/90 p-6 text-sm text-slate">
-            No opportunities match the current filters yet. Try a broader keyword or reset the filters.
+          <div className="mt-8">
+            <NoOpportunitiesEmpty />
           </div>
         ) : (
           <>
