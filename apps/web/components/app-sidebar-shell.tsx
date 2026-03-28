@@ -85,31 +85,33 @@ export function AppSidebarShell({
               </div>
             </div>
 
-            <div>
-              <p className="px-2 text-xs font-semibold uppercase tracking-[0.28em] text-teal">Manage</p>
-              <div className="mt-3 space-y-2">
-                {secondaryLinks.map((link) => {
-                  const active = pathname === link.href;
-                  return (
+            {isAuthenticated ? (
+              <div>
+                <p className="px-2 text-xs font-semibold uppercase tracking-[0.28em] text-teal">Manage</p>
+                <div className="mt-3 space-y-2">
+                  {secondaryLinks.map((link) => {
+                    const active = pathname === link.href;
+                    return (
+                      <Link
+                        key={`${link.href}-${link.label}`}
+                        href={link.href}
+                        className={`app-shell-link ${active ? "app-shell-link-active" : ""}`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                  {showAdminLink ? (
                     <Link
-                      key={`${link.href}-${link.label}`}
-                      href={link.href}
-                      className={`app-shell-link ${active ? "app-shell-link-active" : ""}`}
+                      href="/admin"
+                      className={`app-shell-link ${pathname === "/admin" ? "app-shell-link-active" : ""}`}
                     >
-                      {link.label}
+                      Admin panel
                     </Link>
-                  );
-                })}
-                {showAdminLink ? (
-                  <Link
-                    href="/admin"
-                    className={`app-shell-link ${pathname === "/admin" ? "app-shell-link-active" : ""}`}
-                  >
-                    Admin panel
-                  </Link>
-                ) : null}
+                  ) : null}
+                </div>
               </div>
-            </div>
+            ) : null}
           </nav>
 
           <div className="mt-6 rounded-[28px] border border-white/60 bg-white/80 p-5">
@@ -118,14 +120,18 @@ export function AppSidebarShell({
               <Link href="/opportunities" className="app-shell-utility">
                 Browse fresh opportunities
               </Link>
-              <Link href="/feedback" className="app-shell-utility">
-                Leave feedback
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link href="/feedback" className="app-shell-utility">
+                    Leave feedback
+                  </Link>
+                  <Link href="/profile" className="app-shell-utility">
+                    Update your profile
+                  </Link>
+                </>
+              ) : null}
               <Link href="/help" className="app-shell-utility">
                 Open help center
-              </Link>
-              <Link href="/profile" className="app-shell-utility">
-                Update your profile
               </Link>
               <SessionActionButton
                 isAuthenticated={isAuthenticated}

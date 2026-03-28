@@ -20,6 +20,30 @@ function formatDate(value: string) {
 
 export default async function AdminPage() {
   const token = await getServerAuthToken();
+  const adminTokenConfigured = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
+
+  // SECURITY: Redirect unauthenticated users from admin page
+  if (!adminTokenConfigured) {
+    return (
+      <main className="page-shell">
+        <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
+          <AppHeader
+            eyebrow="Admin"
+            title="Admin access is not configured."
+            description="The administrator token is not set in the environment variables. Only users with proper admin token can access this page."
+            links={[
+              { href: "/", label: "Landing" },
+              { href: "/dashboard", label: "Dashboard" }
+            ]}
+          />
+          <div className="mt-8 rounded-[28px] border border-coral/20 bg-white/90 p-6 text-sm leading-7 text-slate">
+            <strong>Setup Instructions:</strong> Set `INTERN_TRACKER_ADMIN_TOKEN` environment variable on both the API service and web service in Render, then redeploy both.
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   let overview: AnalyticsOverview;
   let users: AdminUserSummary[];
   let feedbackItems: AdminFeedbackItem[];
@@ -39,7 +63,7 @@ export default async function AdminPage() {
         <section className="glass-panel rounded-[32px] p-6 shadow-glow md:p-8">
           <AppHeader
             eyebrow="Admin"
-            title="Admin route is live, but data access is blocked."
+            title="Admin access denied."
             description={message}
             links={[
               { href: "/", label: "Landing" },
@@ -47,9 +71,7 @@ export default async function AdminPage() {
             ]}
           />
           <div className="mt-8 rounded-[28px] border border-coral/20 bg-white/90 p-6 text-sm leading-7 text-slate">
-            Set `INTERN_TRACKER_ADMIN_TOKEN` on both the Render API service and the Render web service, then redeploy
-            both services. If the deployment was made before the `/admin` route existed, trigger a fresh web deploy as
-            well.
+            <strong>Note:</strong> Admin access requires a valid `X-Admin-Token` header. This endpoint is protected and will reject requests without proper authentication.
           </div>
         </section>
       </main>
