@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="bg-mist text-ink antialiased">
         <ErrorBoundary>
           <div className="page-shell pb-0 pt-5">
-            <div className="mb-4 flex flex-col gap-4 rounded-full border border-white/60 bg-white/70 px-5 py-3 backdrop-blur md:flex-row md:items-center md:justify-between">
+            <div className="mb-4 flex flex-col gap-4 rounded-full border border-white/60 [data-theme='dark']:border-teal/20 adaptive-bg-primary px-5 py-3 backdrop-blur md:flex-row md:items-center md:justify-between [data-theme='dark']:bg-slate-800/60">
               <BrandMark compact />
               <div className="flex items-center gap-3">
                 <CommandBar />

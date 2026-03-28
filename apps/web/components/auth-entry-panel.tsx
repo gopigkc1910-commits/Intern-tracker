@@ -45,7 +45,7 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
   const payload = mode === "email" ? { email: identifier.trim().toLowerCase() } : { phone: identifier.trim() };
 
   return (
-    <div className={`rounded-[28px] border border-teal/15 bg-white/90 p-5 shadow-glow ${className}`}>
+    <div className={`rounded-[28px] border border-teal/15 [data-theme='dark']:bg-slate-900 [data-theme='dark']:bg-slate-900 bg-white/90 p-5 shadow-glow ${className}`}>
       <div className="flex flex-wrap items-center gap-2">
         {(["email", "phone"] as const).map((item) => (
           <button
@@ -56,7 +56,7 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
               setMessage(null);
             }}
             className={`rounded-full px-4 py-2 text-sm font-medium ${
-              mode === item ? "bg-ink text-mist" : "bg-mist text-slate"
+              mode === item ? "bg-ink text-mist" : "[data-theme='dark']:bg-slate-800 [data-theme='dark']:text-white adaptive-bg-surface text-slate"
             }`}
           >
             Continue with {item}
@@ -68,32 +68,32 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
       </div>
 
       <div className="mt-5 grid gap-4">
-        <label className="grid gap-2 text-sm font-medium text-ink">
+        <label className="grid gap-2 text-sm font-medium text-ink [data-theme='dark']:text-white">
           Full name
           <input
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
             placeholder="Your name"
-            className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink outline-none"
+            className="rounded-2xl border border-teal/15 [data-theme='dark']:bg-slate-800 [data-theme='dark']:text-white adaptive-bg-surface px-4 py-3 text-sm text-ink outline-none"
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium text-ink">
+        <label className="grid gap-2 text-sm font-medium text-ink [data-theme='dark']:text-white">
           {mode === "email" ? "Email address" : "Phone number"}
           <input
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
             placeholder={mode === "email" ? "you@example.com" : "+91 98765 43210"}
-            className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink outline-none"
+            className="rounded-2xl border border-teal/15 [data-theme='dark']:bg-slate-800 [data-theme='dark']:text-white adaptive-bg-surface px-4 py-3 text-sm text-ink outline-none"
           />
         </label>
         {challengeId ? (
-          <label className="grid gap-2 text-sm font-medium text-ink">
+          <label className="grid gap-2 text-sm font-medium text-ink [data-theme='dark']:text-white">
             One-time code
             <input
               value={otp}
               onChange={(event) => setOtp(event.target.value)}
               placeholder="Enter the 6-digit code"
-              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink outline-none"
+              className="rounded-2xl border border-teal/15 [data-theme='dark']:bg-slate-800 [data-theme='dark']:text-white adaptive-bg-surface px-4 py-3 text-sm text-ink outline-none"
             />
           </label>
         ) : null}

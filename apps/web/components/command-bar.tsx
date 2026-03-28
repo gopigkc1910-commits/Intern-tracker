@@ -39,15 +39,15 @@ export function CommandBar() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-full border border-teal/20 bg-white/80 px-4 py-2 text-sm text-slate"
+        className="rounded-full border border-teal/20 [data-theme='dark']:bg-slate-800/80 [data-theme='dark']:text-white bg-white/80 px-4 py-2 text-sm text-slate"
       >
         Search
       </button>
 
       {open ? (
         <div className="fixed inset-0 z-50 bg-ink/30 p-4 backdrop-blur-sm">
-          <div className="mx-auto mt-20 max-w-2xl rounded-[28px] border border-white/60 bg-white p-5 shadow-glow">
-            <div className="flex items-center gap-3 rounded-2xl border border-teal/15 bg-mist px-4 py-3">
+          <div className="mx-auto mt-20 max-w-2xl rounded-[28px] border border-white/60 [data-theme='dark']:border-teal/20 [data-theme='dark']:bg-slate-900 bg-white p-5 shadow-glow">
+            <div className="flex items-center gap-3 rounded-2xl border border-teal/15 [data-theme='dark']:bg-slate-800 adaptive-bg-surface px-4 py-3">
               <input
                 autoFocus
                 value={query}
@@ -75,7 +75,7 @@ export function CommandBar() {
                     setOpen(false);
                     setQuery("");
                   }}
-                  className="rounded-2xl bg-mist px-4 py-3 text-left text-sm text-ink"
+                  className="rounded-2xl [data-theme='dark']:bg-slate-800 [data-theme='dark']:text-white adaptive-bg-surface px-4 py-3 text-left text-sm text-ink"
                 >
                   {item.label}
                 </button>

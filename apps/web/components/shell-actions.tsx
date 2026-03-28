@@ -22,14 +22,14 @@ export function ShellActions({ initialTheme, initialAuthenticated, showAdminLink
   return (
     <div className="flex items-center gap-3">
       {showAdminLink ? (
-        <Link href="/admin" className="rounded-full border border-teal/20 bg-white/80 px-4 py-2 text-sm text-slate">
+        <Link href="/admin" className="rounded-full border border-teal/20 [data-theme='dark']:bg-slate-800/80 [data-theme='dark']:text-white bg-white/80 px-4 py-2 text-sm text-slate">
           Admin
         </Link>
       ) : null}
       <button
         type="button"
         onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
-        className="rounded-full border border-teal/20 bg-white/80 px-4 py-2 text-sm text-slate"
+        className="rounded-full border border-teal/20 [data-theme='dark']:bg-slate-800/80 [data-theme='dark']:text-white bg-white/80 px-4 py-2 text-sm text-slate"
       >
         {theme === "dark" ? "Light mode" : "Dark mode"}
       </button>
