@@ -87,6 +87,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                     </div>
                   </div>
                 </div>
+                <Link href={`/opportunities/${item.slug}`} className="mt-5 inline-flex text-sm font-medium text-teal">
                   Open detail
                 </Link>
               </article>
