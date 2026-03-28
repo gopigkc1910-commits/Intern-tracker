@@ -70,7 +70,8 @@ create table if not exists opportunities (
   status varchar(30) not null default 'published',
   is_verified boolean not null default false,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint valid_stipend check (stipend_min <= stipend_max or (stipend_min is null or stipend_max is null))
 );
 
 create table if not exists applications (
@@ -82,7 +83,8 @@ create table if not exists applications (
   next_follow_up_at timestamptz,
   note text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique(user_id, opportunity_id)
 );
 
 create table if not exists feedback_submissions (

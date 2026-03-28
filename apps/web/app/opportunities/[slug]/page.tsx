@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppSidebarShell } from "../../../components/app-sidebar-shell";
 import { AppHeader } from "../../../components/app-header";
 import { CompareToggleButton } from "../../../components/compare-toggle-button";
 import { OpportunityActionPanel } from "../../../components/opportunity-action-panel";
@@ -23,12 +24,15 @@ function moneyLabel(min: number | null, max: number | null, currency: string | n
 }
 
 export default async function OpportunityDetailPage({ params }: OpportunityDetailPageProps) {
+  const token = await getServerAuthToken();
+  const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
+  
   let opportunity: OpportunityDetail;
   try {
     opportunity = await getOpportunity(params.slug);
   } catch {
     return (
-      <main className="page-shell">
+      <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
         <section className="glass-panel rounded-[34px] p-8 shadow-glow">
           <p className="text-xs uppercase tracking-[0.24em] text-teal">Opportunity Detail</p>
           <h1 className="mt-3 text-3xl font-semibold text-ink">This opportunity is unavailable right now.</h1>
@@ -41,16 +45,16 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
             </Link>
           </div>
         </section>
-      </main>
+      </AppSidebarShell>
     );
   }
-  const token = await getServerAuthToken();
+  
   const profile: UserProfile | null = token ? await getProfile(token).catch(() => null) : null;
   const applications = token ? await getApplications(token).catch(() => []) : [];
   const existingApplication = applications.find((item) => item.opportunity.id === opportunity.id);
 
   return (
-    <main className="page-shell">
+    <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
       <section className="glass-panel rounded-[34px] p-6 shadow-glow md:p-8">
         <AppHeader
           eyebrow={`${opportunity.type} | ${opportunity.domain} | ${opportunity.mode}`}
@@ -120,6 +124,6 @@ export default async function OpportunityDetailPage({ params }: OpportunityDetai
           </div>
         </div>
       </section>
-    </main>
+    </AppSidebarShell>
   );
 }

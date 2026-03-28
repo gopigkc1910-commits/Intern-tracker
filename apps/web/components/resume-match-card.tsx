@@ -4,7 +4,8 @@ function calculateMatch(profile: UserProfile | null, opportunity: OpportunityDet
   if (!profile) return null;
 
   let score = 35;
-  const skillOverlap = opportunity.required_skills.filter((skill) =>
+  const skills = opportunity.required_skills ?? [];
+  const skillOverlap = skills.filter((skill) =>
     profile.skills.some((item) => item.toLowerCase() === skill.toLowerCase())
   ).length;
   score += Math.min(skillOverlap * 12, 36);

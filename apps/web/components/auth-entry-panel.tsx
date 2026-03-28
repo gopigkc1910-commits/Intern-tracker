@@ -15,6 +15,15 @@ type AuthEntryPanelProps = {
 
 type Mode = "email" | "phone";
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhone(phone: string): boolean {
+  // Basic phone validation: +XX or 10+ digits
+  return /^(\+\d{1,3})?\d{10,}$/.test(phone.replace(/\s/g, ""));
+}
+
 export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: AuthEntryPanelProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("email");
@@ -96,6 +105,13 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
             type="button"
             disabled={isPending || !identifier.trim()}
             onClick={() => {
+              // Validate email or phone format
+              const isValid = mode === "email" ? isValidEmail(identifier) : isValidPhone(identifier);
+              if (!isValid) {
+                setMessage(mode === "email" ? "Please enter a valid email address." : "Please enter a valid phone number.");
+                return;
+              }
+              
               startTransition(async () => {
                 try {
                   const response = await requestOtp(payload);

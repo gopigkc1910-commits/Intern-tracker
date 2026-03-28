@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { getOpportunity } from "../../lib/api";
+import { getServerAuthToken } from "../../lib/session";
 import type { OpportunityDetail } from "../../lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,9 @@ function stipendLabel(item: OpportunityDetail) {
 }
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
+  const token = await getServerAuthToken();
+  const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
+  
   const slugs = (searchParams?.slugs ?? "")
     .split(",")
     .map((item) => item.trim())
@@ -37,7 +42,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
   ).filter(Boolean) as OpportunityDetail[];
 
   return (
-    <main className="page-shell">
+    <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
       <section className="glass-panel rounded-[34px] p-6 shadow-glow md:p-8">
         <AppHeader
           eyebrow="Compare"
@@ -77,7 +82,6 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
                     </div>
                   </div>
                 </div>
-                <Link href={`/opportunities/${item.slug}`} className="mt-5 inline-flex text-sm font-medium text-teal">
                   Open detail
                 </Link>
               </article>
@@ -85,6 +89,6 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
           </div>
         )}
       </section>
-    </main>
+    </AppSidebarShell>
   );
 }

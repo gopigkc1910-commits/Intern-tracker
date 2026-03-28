@@ -13,6 +13,22 @@ function fromCommaList(value: string) {
     .filter(Boolean);
 }
 
+function isValidUrl(url: string): boolean {
+  if (!url) return true; // Empty is ok
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isValidGraduationYear(year: string): boolean {
+  if (!year) return true; // Empty is ok
+  const num = Number(year);
+  return Number.isInteger(num) && num >= 2000 && num <= 2050;
+}
+
 export function ProfileForm({ profile }: { profile: UserProfile }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -41,6 +57,25 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
       className="grid gap-5"
       onSubmit={(event) => {
         event.preventDefault();
+        
+        // Validation
+        if (!isValidGraduationYear(formState.graduation_year)) {
+          setMessage("Graduation year must be between 2000 and 2050.");
+          return;
+        }
+        if (!isValidUrl(formState.github_url)) {
+          setMessage("GitHub URL is invalid. Use a full URL like https://github.com/username");
+          return;
+        }
+        if (!isValidUrl(formState.linkedin_url)) {
+          setMessage("LinkedIn URL is invalid. Use a full URL like https://linkedin.com/in/username");
+          return;
+        }
+        if (!isValidUrl(formState.resume_url)) {
+          setMessage("Resume URL is invalid. Use a full URL like https://example.com/resume.pdf");
+          return;
+        }
+        
         startTransition(async () => {
           try {
             await clientJsonFetch<UserProfile>("/api/profile", {
