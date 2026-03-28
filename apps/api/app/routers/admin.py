@@ -21,12 +21,15 @@ from app.schemas import (
     UpdateFeedbackStatusRequest,
 )
 from app.services import OPPORTUNITY_STATUSES, slugify_text, to_opportunity_detail, use_demo_store
+from app.audit_log import log_admin_action
 
 router = APIRouter(tags=["admin"])
 
 
 @router.get("/admin/analytics/overview", response_model=AnalyticsOverviewResponse)
 def analytics_overview(_: None = Depends(require_admin), db: Session = Depends(get_db)) -> AnalyticsOverviewResponse:
+    log_admin_action(admin_id=None, action="READ", resource="ANALYTICS")
+    
     if use_demo_store():
         return DEMO_STORE.analytics()
     active_users = db.query(func.count(User.id)).scalar() or 0
@@ -45,7 +48,14 @@ def analytics_overview(_: None = Depends(require_admin), db: Session = Depends(g
 
 @router.get("/admin/users", response_model=AdminUsersResponse)
 def list_users(_: None = Depends(require_admin), db: Session = Depends(get_db)) -> AdminUsersResponse:
+    if use_demo_store():
+        users = DEMO_STORE.list_users()
+        log_admin_action(admin_id=None, action="READ", resource="USER", details={"count": len(users)})
+        return AdminUsersResponse(items=users)
+    
     users = db.query(User).options(joinedload(User.profile)).order_by(User.created_at.desc()).all()
+    log_admin_action(admin_id=None, action="READ", resource="USER", details={"count": len(users)})
+    
     items: list[AdminUserSummary] = []
 
     for user in users:

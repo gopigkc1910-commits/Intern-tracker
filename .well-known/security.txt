@@ -1,0 +1,23 @@
+Contact: gopig@student.edu
+Expires: 2027-03-28T00:00:00Z
+Preferred-Languages: en
+Canonical: https://intern-tracker.com/.well-known/security.txt
+
+---
+
+Thank you for helping keep our platform secure!
+
+If you discover a security vulnerability, please report it to us responsibly:
+- Email: gopig@student.edu  
+- Please do not disclose the vulnerability publicly until we have a fix
+- We will acknowledge receipt within 24 hours and provide an estimated timeline for a fix
+
+Security Best Practices:
+- We implement rate limiting on authentication endpoints
+- Sensitive data is logged for audit purposes
+- All admin operations are logged and monitored
+- CSRF protection is enabled on state-changing operations
+- Security headers are enforced on all responses
+- Passwords are never logged or stored in plain text
+
+For security updates and advisories, check our documentation.

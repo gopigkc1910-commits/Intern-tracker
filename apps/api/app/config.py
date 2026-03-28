@@ -19,6 +19,23 @@ class Settings(BaseSettings):
     google_oauth_url: str | None = None
     github_oauth_url: str | None = None
     linkedin_oauth_url: str | None = None
+    
+    # Security settings
+    secure_cookies: bool = True  # Use Secure flag on cookies (only for HTTPS)
+    samesite_cookies: str = "strict"  # SameSite policy: strict, lax, none
+    cors_allow_credentials: bool = True
+    cors_allow_methods: list[str] = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+    cors_expose_headers: list[str] = ["X-Total-Count", "X-Page-Number"]
+    
+    # Rate limiting
+    otp_rate_limit_per_window: int = 5  # Max OTP requests
+    otp_rate_limit_window_minutes: int = 15  # Time window for OTP
+    login_rate_limit_per_window: int = 10  # Max login attempts  
+    login_rate_limit_window_minutes: int = 15  # Time window for login
+    
+    # Security headers
+    enable_security_headers: bool = True
+    csp_header: str = "default-src 'self'"
 
 
 settings = Settings()

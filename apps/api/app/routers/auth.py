@@ -29,6 +29,8 @@ from app.services import (
     to_user_profile_response,
     use_demo_store,
 )
+from app.rate_limiter import check_rate_limit
+from app.audit_log import log_auth_event
 
 router = APIRouter(tags=["auth"])
 
@@ -64,6 +66,7 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
     if use_demo_store():
         email = payload.email.strip().lower() if payload.email else settings.demo_email
         phone = payload.phone.strip() if payload.phone else settings.demo_phone
+        log_auth_event("OTP_REQUEST", email=email, phone=phone, status="success")
         return RequestOtpResponse(
             challenge_id=DEMO_STORE.user.id,
             message="Demo OTP generated. Use 000000 to continue.",
@@ -76,6 +79,19 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
     phone = payload.phone.strip() if payload.phone else None
     if not email and not phone:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or phone is required")
+
+    # Rate limiting: Check OTP request limit
+    identifier = email or phone or "unknown"
+    try:
+        check_rate_limit(
+            identifier=identifier,
+            limit=settings.auth_otp_request_limit,
+            window_minutes=settings.auth_otp_request_window_minutes,
+            operation="otp_request"
+        )
+    except HTTPException as e:
+        log_auth_event("OTP_REQUEST", email=email, phone=phone, status="denied", details={"reason": "rate_limit"})
+        raise
 
     window_start = datetime.now(UTC) - timedelta(minutes=settings.auth_otp_request_window_minutes)
     filters = []
@@ -90,6 +106,7 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
         )
     )
     if recent_requests and recent_requests >= settings.auth_otp_request_limit:
+        log_auth_event("OTP_REQUEST", email=email, phone=phone, status="denied", details={"reason": "database_limit"})
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many OTP requests. Please wait before trying again.",
@@ -107,6 +124,8 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
     db.commit()
     db.refresh(challenge)
 
+    log_auth_event("OTP_REQUEST", email=email, phone=phone, status="success")
+
     return RequestOtpResponse(
         challenge_id=challenge.id,
         message=f"A one-time code has been prepared for your {channel}.",
@@ -119,6 +138,7 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
 @router.post("/auth/verify-otp", response_model=AuthResponse)
 def verify_otp(payload: VerifyOtpRequest, db: Session = Depends(get_db)) -> AuthResponse:
     if use_demo_store():
+        log_auth_event("LOGIN", user_id=str(DEMO_STORE.user.id), status="success")
         return AuthResponse(
             access_token=settings.demo_token,
             refresh_token=f"{settings.demo_token}-refresh",
@@ -127,16 +147,22 @@ def verify_otp(payload: VerifyOtpRequest, db: Session = Depends(get_db)) -> Auth
 
     challenge = db.get(AuthChallenge, payload.challenge_id)
     if challenge is None:
+        log_auth_event("OTP_VERIFY", status="failure", details={"reason": "challenge_not_found"})
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="OTP challenge not found")
     if challenge.consumed_at is not None:
+        log_auth_event("OTP_VERIFY", status="failure", details={"reason": "otp_already_used"})
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="OTP already used")
     if challenge.expires_at <= datetime.now(UTC):
+        log_auth_event("OTP_VERIFY", status="failure", details={"reason": "otp_expired"})
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="OTP has expired")
     if challenge.code_hash != hash_otp(payload.otp):
+        log_auth_event("OTP_VERIFY", email=challenge.email, phone=challenge.phone, status="failure", details={"reason": "invalid_otp"})
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP")
     if payload.email and challenge.email and payload.email.strip().lower() != challenge.email:
+        log_auth_event("OTP_VERIFY", status="failure", details={"reason": "email_mismatch"})
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email does not match this OTP")
     if payload.phone and challenge.phone and payload.phone.strip() != challenge.phone:
+        log_auth_event("OTP_VERIFY", status="failure", details={"reason": "phone_mismatch"})
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone does not match this OTP")
 
     user = get_user_by_identifier(db, email=challenge.email, phone=challenge.phone)
@@ -152,6 +178,8 @@ def verify_otp(payload: VerifyOtpRequest, db: Session = Depends(get_db)) -> Auth
     challenge.consumed_at = datetime.now(UTC)
     db.add(challenge)
     db.commit()
+
+    log_auth_event("LOGIN", user_id=str(user.id), email=challenge.email, phone=challenge.phone, status="success")
 
     return AuthResponse(
         access_token=session.token,
