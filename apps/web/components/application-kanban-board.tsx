@@ -58,6 +58,12 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
   }));
 
   const patchApplication = (applicationId: string, payload: { status?: ColumnId; note?: string; next_follow_up_at?: string | null }) => {
+    // Validate status if provided
+    if (payload.status && !columns.some(col => col.id === payload.status)) {
+      setMessage("Invalid status. Please refresh and try again.");
+      return;
+    }
+    
     startTransition(async () => {
       try {
         await clientJsonFetch<ApplicationRecord>(`/api/applications/${applicationId}`, {

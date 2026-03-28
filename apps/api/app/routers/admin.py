@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
+from datetime import UTC, datetime
 
 from app.demo_store import DEMO_STORE
 from app.db import get_db
@@ -124,6 +125,15 @@ def create_admin_opportunity(
 ) -> OpportunityDetail:
     if payload.status not in OPPORTUNITY_STATUSES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid opportunity status")
+    
+    # Validate deadline is in the future if provided
+    if payload.deadline_at is not None:
+        now = datetime.now(UTC)
+        if payload.deadline_at <= now:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Deadline must be in the future"
+            )
 
     if use_demo_store():
         return DEMO_STORE.create_opportunity(payload.model_dump())
@@ -177,6 +187,15 @@ def update_admin_opportunity(
 ) -> OpportunityDetail:
     if payload.status not in OPPORTUNITY_STATUSES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid opportunity status")
+    
+    # Validate deadline is in the future if provided
+    if payload.deadline_at is not None:
+        now = datetime.now(UTC)
+        if payload.deadline_at <= now:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Deadline must be in the future"
+            )
 
     if use_demo_store():
         try:

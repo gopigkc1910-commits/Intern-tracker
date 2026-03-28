@@ -16,6 +16,11 @@ import type {
 
 const API_ROOT =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8000/api/v1";
+/**
+ * API request timeout in milliseconds
+ * Requests that exceed this duration will be aborted
+ * Current: 4 seconds - adjust if your API is slow
+ */
 const API_TIMEOUT_MS = 4000;
 
 export const AUTH_TOKEN_COOKIE = "intern_tracker_auth_token";

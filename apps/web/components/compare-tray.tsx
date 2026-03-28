@@ -5,17 +5,27 @@ import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "intern_radar_compare_slugs";
 
+/**
+ * Validate if a slug is in proper format (alphanumeric, hyphens, underscores only)
+ */
+function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9_-]+$/i.test(slug) && slug.length > 0 && slug.length < 255;
+}
+
 function readSlugs() {
   if (typeof window === "undefined") return [] as string[];
   try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]") as string[];
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]") as unknown;
+    if (!Array.isArray(stored)) return [];
+    return stored.filter((item): item is string => typeof item === "string" && isValidSlug(item));
   } catch {
     return [];
   }
 }
 
 function writeSlugs(slugs: string[]) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(slugs));
+  const validated = slugs.filter(isValidSlug);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
   window.dispatchEvent(new Event("intern-radar-compare-update"));
 }
 

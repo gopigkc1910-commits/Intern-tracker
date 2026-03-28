@@ -19,6 +19,11 @@ function stipendLabel(item: OpportunityDetail) {
   return `${item.currency ?? "INR"} ${item.stipend_min ?? 0} - ${item.stipend_max ?? 0}`;
 }
 
+// Type predicate for filtering non-null values
+function isNotNull<T>(value: T | null): value is T {
+  return value !== null;
+}
+
 export default async function ComparePage({ searchParams }: ComparePageProps) {
   const token = await getServerAuthToken();
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
@@ -26,7 +31,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
   const slugs = (searchParams?.slugs ?? "")
     .split(",")
     .map((item) => item.trim())
-    .filter(Boolean)
+    .filter((item): item is string => Boolean(item))
     .slice(0, 3);
 
   const items = (
@@ -39,7 +44,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         }
       })
     )
-  ).filter(Boolean) as OpportunityDetail[];
+  ).filter(isNotNull);
 
   return (
     <AppSidebarShell isAuthenticated={Boolean(token)} showAdminLink={showAdminLink}>
