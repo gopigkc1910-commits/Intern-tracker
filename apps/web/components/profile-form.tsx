@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { clientJsonFetch } from "../lib/client-json";
+import { useApiMutation } from "../lib/use-api-mutation";
 import type { UserProfile } from "../lib/types";
+import { Button } from "./ui/button";
 
 function fromCommaList(value: string) {
   return value
@@ -31,8 +33,7 @@ function isValidGraduationYear(year: string): boolean {
 
 export function ProfileForm({ profile }: { profile: UserProfile }) {
   const router = useRouter();
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { mutate, isPending, message, setMessage } = useApiMutation(() => router.refresh());
   const [formState, setFormState] = useState({
     full_name: profile.full_name ?? "",
     college_name: profile.college_name ?? "",
@@ -76,39 +77,33 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           return;
         }
         
-        startTransition(async () => {
-          try {
-            await clientJsonFetch<UserProfile>("/api/profile", {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                full_name: formState.full_name,
-                college_name: formState.college_name,
-                degree: formState.degree,
-                branch: formState.branch,
-                graduation_year: formState.graduation_year ? Number(formState.graduation_year) : null,
-                city: formState.city,
-                country: formState.country,
-                bio: formState.bio,
-                goals: formState.goals,
-                preferred_domains: fromCommaList(formState.preferred_domains),
-                preferred_locations: fromCommaList(formState.preferred_locations),
-                preferred_opportunity_types: fromCommaList(formState.preferred_opportunity_types),
-                skills: fromCommaList(formState.skills),
-                github_url: formState.github_url,
-                linkedin_url: formState.linkedin_url,
-                resume_url: formState.resume_url,
-                onboarding_completed: true
-              })
-            });
-            setMessage("Profile saved. Recommendations will reflect the new preferences.");
-            router.refresh();
-          } catch {
-            setMessage("Could not save the profile. Make sure the API is available.");
-          }
-        });
+        mutate(async () => {
+          await clientJsonFetch<UserProfile>("/api/profile", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              full_name: formState.full_name,
+              college_name: formState.college_name,
+              degree: formState.degree,
+              branch: formState.branch,
+              graduation_year: formState.graduation_year ? Number(formState.graduation_year) : null,
+              city: formState.city,
+              country: formState.country,
+              bio: formState.bio,
+              goals: formState.goals,
+              preferred_domains: fromCommaList(formState.preferred_domains),
+              preferred_locations: fromCommaList(formState.preferred_locations),
+              preferred_opportunity_types: fromCommaList(formState.preferred_opportunity_types),
+              skills: fromCommaList(formState.skills),
+              github_url: formState.github_url,
+              linkedin_url: formState.linkedin_url,
+              resume_url: formState.resume_url,
+              onboarding_completed: true
+            })
+          });
+        }, "Profile saved. Recommendations will reflect the new preferences.");
       }}
     >
       <div className="rounded-3xl bg-mist px-5 py-4 text-sm leading-6 text-slate">
@@ -179,13 +174,13 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <button
+        <Button
           type="submit"
           disabled={isPending}
-          className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-mist"
+          loading={isPending}
         >
-          {isPending ? "Saving..." : "Save Profile"}
-        </button>
+          Save Profile
+        </Button>
         {message ? <p className="text-sm text-slate">{message}</p> : null}
       </div>
       <p className="text-xs leading-5 text-slate">

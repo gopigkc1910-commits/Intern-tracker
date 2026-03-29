@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, func, Index
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -72,6 +72,10 @@ class Organization(Base):
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
+    __table_args__ = (
+        Index('idx_opportunities_domain_mode', 'domain', 'mode'),
+        Index('idx_opportunities_deadline', 'deadline_at'),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     source_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -107,6 +111,9 @@ class Opportunity(Base):
 
 class Application(Base):
     __tablename__ = "applications"
+    __table_args__ = (
+        Index('idx_applications_user_status', 'user_id', 'status'),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))

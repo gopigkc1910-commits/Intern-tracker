@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
-
+import { useState } from "react";
 import { clientJsonFetch } from "../lib/client-json";
+import { useApiMutation } from "../lib/use-api-mutation";
+import { Button } from "./ui/button";
 
 type SaveSearchButtonProps = {
   isAuthenticated: boolean;
@@ -19,12 +20,30 @@ type SaveSearchButtonProps = {
 
 export function SaveSearchButton({ isAuthenticated, filters }: SaveSearchButtonProps) {
   const [label, setLabel] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { mutate, isPending, message } = useApiMutation(() => setLabel(""));
 
   if (!isAuthenticated) {
     return <p className="text-sm text-slate">Sign in to save your favorite searches.</p>;
   }
+
+  const handleSave = () => {
+    mutate(async () => {
+      await clientJsonFetch("/api/saved-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: label.trim(),
+          search: filters.search || undefined,
+          type: filters.type || undefined,
+          mode: filters.mode || undefined,
+          verified: filters.verified === "true",
+          deadline_days: filters.deadline_days ? Number(filters.deadline_days) : undefined,
+          paid_only: filters.paid_only === "true",
+          min_stipend: filters.min_stipend ? Number(filters.min_stipend) : undefined
+        })
+      });
+    }, "Search saved to your dashboard.");
+  };
 
   return (
     <div className="mt-4 flex flex-col gap-3 rounded-[22px] border border-teal/10 bg-mist/70 p-4 md:flex-row md:items-center">
@@ -34,37 +53,15 @@ export function SaveSearchButton({ isAuthenticated, filters }: SaveSearchButtonP
         placeholder="Name this search, e.g. Remote AI internships"
         className="min-w-0 flex-1 rounded-2xl border border-teal/15 bg-white px-4 py-3 text-sm outline-none"
       />
-      <button
+      <Button
         type="button"
-        disabled={isPending || label.trim().length < 2}
-        onClick={() => {
-          startTransition(async () => {
-            try {
-              await clientJsonFetch("/api/saved-searches", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  label: label.trim(),
-                  search: filters.search || undefined,
-                  type: filters.type || undefined,
-                  mode: filters.mode || undefined,
-                  verified: filters.verified === "true",
-                  deadline_days: filters.deadline_days ? Number(filters.deadline_days) : undefined,
-                  paid_only: filters.paid_only === "true",
-                  min_stipend: filters.min_stipend ? Number(filters.min_stipend) : undefined
-                })
-              });
-              setMessage("Search saved to your dashboard.");
-              setLabel("");
-            } catch (error) {
-              setMessage(error instanceof Error ? error.message : "Could not save this search.");
-            }
-          });
-        }}
-        className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist"
+        variant="primary"
+        disabled={label.trim().length < 2}
+        loading={isPending}
+        onClick={handleSave}
       >
-        {isPending ? "Saving..." : "Save search"}
-      </button>
+        Save search
+      </Button>
       {message ? <p className="text-sm text-slate">{message}</p> : null}
     </div>
   );

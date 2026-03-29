@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
+from sqlalchemy.orm import Session, joinedload
 
 from app.demo_store import DEMO_STORE
 from app.db import get_db
@@ -19,6 +19,7 @@ router = APIRouter(tags=["opportunities"])
 
 @router.get("/opportunities", response_model=OpportunityListResponse)
 def list_opportunities(
+    response: Response,
     search: str | None = Query(default=None),
     type: str | None = Query(default=None),
     mode: str | None = Query(default=None),
@@ -30,6 +31,9 @@ def list_opportunities(
     limit: int = Query(default=20, gt=0, le=100),
     db: Session = Depends(get_db),
 ) -> OpportunityListResponse:
+    # Adding short cache header for list query
+    response.headers["Cache-Control"] = "public, max-age=60"
+    
     if use_demo_store():
         total, items = DEMO_STORE.list_opportunities(
             search=search,
@@ -79,7 +83,10 @@ def recommended_opportunities(
 
 
 @router.get("/opportunities/{slug}", response_model=OpportunityDetail)
-def get_opportunity(slug: str, db: Session = Depends(get_db)) -> OpportunityDetail:
+def get_opportunity(slug: str, response: Response, db: Session = Depends(get_db)) -> OpportunityDetail:
+    # 5 min cache for specific opportunity fetch
+    response.headers["Cache-Control"] = "public, max-age=300"
+    
     if use_demo_store():
         opportunity = DEMO_STORE.get_opportunity(slug)
         if opportunity is None:
@@ -87,6 +94,7 @@ def get_opportunity(slug: str, db: Session = Depends(get_db)) -> OpportunityDeta
         return opportunity
     opportunity = (
         db.query(Opportunity)
+        .options(joinedload(Opportunity.organization))
         .filter(Opportunity.slug == slug, Opportunity.status == "published")
         .first()
     )

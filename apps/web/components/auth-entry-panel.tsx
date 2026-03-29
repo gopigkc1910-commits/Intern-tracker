@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 
 import { getAuthProviders, requestOtp } from "../lib/api";
 import { clientJsonFetch } from "../lib/client-json";
+import { useApiMutation } from "../lib/use-api-mutation";
 import type { AuthProvider } from "../lib/types";
+import { Button } from "./ui/button";
 
 type AuthEntryPanelProps = {
   redirectTo?: string;
@@ -20,7 +22,6 @@ function isValidEmail(email: string): boolean {
 }
 
 function isValidPhone(phone: string): boolean {
-  // Basic phone validation: +XX or 10+ digits
   return /^(\+\d{1,3})?\d{10,}$/.test(phone.replace(/\s/g, ""));
 }
 
@@ -31,10 +32,10 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
   const [identifier, setIdentifier] = useState("");
   const [otp, setOtp] = useState("");
   const [challengeId, setChallengeId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [developmentCode, setDevelopmentCode] = useState<string | null>(null);
   const [providers, setProviders] = useState<AuthProvider[]>([]);
-  const [isPending, startTransition] = useTransition();
+  
+  const { mutate, isPending, message, setMessage } = useApiMutation();
 
   useEffect(() => {
     getAuthProviders()
@@ -101,62 +102,53 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
 
       <div className="mt-5 flex flex-wrap gap-3">
         {!challengeId ? (
-          <button
+          <Button
             type="button"
-            disabled={isPending || !identifier.trim()}
+            variant="primary"
+            disabled={!identifier.trim() || isPending}
+            loading={isPending}
             onClick={() => {
-              // Validate email or phone format
               const isValid = mode === "email" ? isValidEmail(identifier) : isValidPhone(identifier);
               if (!isValid) {
-                setMessage(mode === "email" ? "Please enter a valid email address." : "Please enter a valid phone number.");
+                setMessage(mode === "email" ? "Error: Please enter a valid email address." : "Error: Please enter a valid phone number.");
                 return;
               }
               
-              startTransition(async () => {
-                try {
-                  const response = await requestOtp(payload);
-                  setChallengeId(response.challenge_id);
-                  setDevelopmentCode(response.development_code);
-                  setMessage(`${response.message} Target: ${response.target_hint}`);
-                } catch {
-                  setMessage("We could not prepare the code yet. Check the API and try again.");
-                }
-              });
+              mutate(async () => {
+                const response = await requestOtp(payload);
+                setChallengeId(response.challenge_id);
+                setDevelopmentCode(response.development_code);
+                setMessage(`${response.message} Target: ${response.target_hint}`);
+              }, "Code sent.");
             }}
-            className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist"
           >
-            {isPending ? "Preparing..." : "Send code"}
-          </button>
+            Send code
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
-            disabled={isPending || otp.trim().length < 6}
+            variant="primary"
+            disabled={otp.trim().length < 6 || isPending}
+            loading={isPending}
             onClick={() => {
-              startTransition(async () => {
-                try {
-                  await clientJsonFetch<{ user: unknown }>("/api/auth/session", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                      challenge_id: challengeId,
-                      otp: otp.trim(),
-                      full_name: fullName.trim() || undefined,
-                      ...payload
-                    })
-                  });
-                  router.push(redirectTo);
-                  router.refresh();
-                } catch {
-                  setMessage("Verification failed. Double-check the code and try again.");
-                }
-              });
+              mutate(async () => {
+                await clientJsonFetch<{ user: unknown }>("/api/auth/session", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    challenge_id: challengeId,
+                    otp: otp.trim(),
+                    full_name: fullName.trim() || undefined,
+                    ...payload
+                  })
+                });
+                router.push(redirectTo);
+                router.refresh();
+              }, "Signing in...");
             }}
-            className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist"
           >
-            {isPending ? "Signing in..." : "Verify and continue"}
-          </button>
+            Verify and continue
+          </Button>
         )}
       </div>
 
@@ -165,7 +157,11 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
           Debug code: <span className="font-semibold">{developmentCode}</span>
         </p>
       ) : null}
-      {message ? <p className="mt-3 text-sm text-slate">{message}</p> : null}
+      {message && !message.startsWith("Error:") && !message.startsWith("Code sent.") && !message.startsWith("Signing") ? (
+        <p className="mt-3 text-sm text-slate">{message}</p>
+      ) : message?.startsWith("Error:") ? (
+        <p className="mt-3 text-sm text-coral">{message}</p>
+      ) : null}
 
       <div className="mt-6 border-t border-teal/10 pt-4">
         <p className="text-xs uppercase tracking-[0.24em] text-slate">Social sign-in</p>
@@ -175,7 +171,7 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
               <a
                 key={provider.id}
                 href={provider.auth_url}
-                className="rounded-full border border-teal/20 px-4 py-2 text-sm text-teal"
+                className="rounded-full border border-teal/20 px-4 py-2 text-sm text-teal hover:bg-teal/5 transition-colors"
               >
                 Continue with {provider.label}
               </a>
@@ -184,7 +180,7 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
                 key={provider.id}
                 type="button"
                 disabled
-                className="rounded-full border border-slate/10 px-4 py-2 text-sm text-slate"
+                className="rounded-full border border-slate/10 px-4 py-2 text-sm text-slate opacity-60"
               >
                 {provider.label} setup needed
               </button>
