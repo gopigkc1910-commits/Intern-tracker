@@ -1,7 +1,9 @@
 import secrets
+import smtplib
+from email.message import EmailMessage
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status, BackgroundTasks
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -34,6 +36,27 @@ from app.audit_log import log_auth_event
 
 router = APIRouter(tags=["auth"])
 
+def send_gmail_otp(to_email: str, code: str):
+    sender_email = settings.gmail_address
+    sender_password = settings.gmail_app_password
+    
+    if not sender_email or not sender_password:
+        print("Notice: GMAIL_ADDRESS or GMAIL_APP_PASSWORD missing. Real emails skipped.")
+        return
+
+    msg = EmailMessage()
+    msg.set_content(f"Your one-time login code for Intern Tracker is:\n\n{code}\n\nThis code will expire in {settings.auth_otp_ttl_minutes} minutes.")
+    msg["Subject"] = "Your Intern Tracker Login Code"
+    msg["From"] = f"Intern Tracker <{sender_email}>"
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+            print(f"System: Successfully dispatched live OTP to {to_email}")
+    except Exception as e:
+        print(f"System: Failed to send email to {to_email}: {e}")
 
 @router.get("/auth/providers", response_model=AuthProvidersResponse)
 def list_auth_providers() -> AuthProvidersResponse:
@@ -62,7 +85,7 @@ def list_auth_providers() -> AuthProvidersResponse:
 
 
 @router.post("/auth/request-otp", response_model=RequestOtpResponse)
-def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> RequestOtpResponse:
+def request_otp(payload: RequestOtpRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> RequestOtpResponse:
     if use_demo_store():
         email = payload.email.strip().lower() if payload.email else settings.demo_email
         phone = payload.phone.strip() if payload.phone else settings.demo_phone
@@ -119,6 +142,10 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
     print(f"==================================================")
     print(f"OTP CODE FOR {identifier}: {code}")
     print(f"==================================================")
+
+    # Immediately fire off actual email processing in the background!
+    if email:
+        background_tasks.add_task(send_gmail_otp, email, code)
 
     challenge = AuthChallenge(
         email=email,
