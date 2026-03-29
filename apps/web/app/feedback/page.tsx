@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { FeedbackComposer } from "../../components/feedback-composer";
@@ -8,6 +9,9 @@ export const dynamic = "force-dynamic";
 
 export default async function FeedbackPage() {
   const token = await getServerAuthToken();
+  if (!token) {
+    redirect("/");
+  }
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
 
   return (

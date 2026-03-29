@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { getServerAuthToken } from "../../lib/session";
@@ -7,6 +8,9 @@ export const dynamic = "force-dynamic";
 
 export default async function HelpPage() {
   const token = await getServerAuthToken();
+  if (!token) {
+    redirect("/");
+  }
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
 
   return (

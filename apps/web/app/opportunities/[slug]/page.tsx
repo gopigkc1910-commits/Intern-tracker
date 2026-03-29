@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { AppSidebarShell } from "../../../components/app-sidebar-shell";
@@ -25,6 +26,9 @@ function moneyLabel(min: number | null, max: number | null, currency: string | n
 
 export default async function OpportunityDetailPage({ params }: OpportunityDetailPageProps) {
   const token = await getServerAuthToken();
+  if (!token) {
+    redirect("/");
+  }
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
   
   let opportunity: OpportunityDetail;

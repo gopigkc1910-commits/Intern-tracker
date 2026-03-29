@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { AdminFeedbackTriage } from "../../components/admin-feedback-triage";
@@ -20,6 +21,9 @@ function formatDate(value: string) {
 
 export default async function AdminPage() {
   const token = await getServerAuthToken();
+  if (!token) {
+    redirect("/");
+  }
   const adminTokenConfigured = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
 
   // SECURITY: Redirect unauthenticated users from admin page

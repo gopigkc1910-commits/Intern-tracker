@@ -1,8 +1,8 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
-import { AuthEntryPanel } from "../../components/auth-entry-panel";
 import { ProfileForm } from "../../components/profile-form";
 import { getProfile } from "../../lib/api";
 import { getServerAuthToken } from "../../lib/session";
@@ -14,21 +14,7 @@ export default async function ProfilePage() {
   const token = await getServerAuthToken();
 
   if (!token) {
-    return (
-      <main className="page-shell">
-        <section className="glass-panel rounded-[32px] p-8 shadow-glow">
-          <p className="text-xs uppercase tracking-[0.3em] text-teal">Profile</p>
-          <h1 className="mt-3 text-3xl font-semibold text-ink">Sign in to edit your profile.</h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-slate">
-            Profile preferences drive recommendation quality, notification relevance, and the overall search
-            experience.
-          </p>
-          <div className="mt-6 max-w-2xl">
-            <AuthEntryPanel redirectTo="/profile" />
-          </div>
-        </section>
-      </main>
-    );
+    redirect("/");
   }
 
   let profile: UserProfile;

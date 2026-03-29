@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
@@ -26,6 +27,9 @@ function isNotNull<T>(value: T | null): value is T {
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
   const token = await getServerAuthToken();
+  if (!token) {
+    redirect("/");
+  }
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
   
   const slugs = (searchParams?.slugs ?? "")

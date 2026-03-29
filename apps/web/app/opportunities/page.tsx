@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { AppSidebarShell } from "../../components/app-sidebar-shell";
@@ -47,6 +48,10 @@ function activeFilters(searchParams: OpportunitiesPageProps["searchParams"]) {
 export default async function OpportunitiesPage({ searchParams }: OpportunitiesPageProps) {
   const currentFilters = searchParams ?? {};
   const token = await getServerAuthToken();
+  if (!token) {
+    redirect("/");
+  }
+
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
   let profile: UserProfile | null = null;
   let items: OpportunitySummary[] = [];
