@@ -468,7 +468,11 @@ def list_opportunities(
     deadline_days: int | None = None,
     paid_only: bool = False,
     min_stipend: float | None = None,
-) -> list[Opportunity]:
+    skip: int = 0,
+    limit: int = 20,
+) -> tuple[int, list[Opportunity]]:
+    from sqlalchemy import func
+    
     query = (
         select(Opportunity)
         .options(joinedload(Opportunity.organization))
@@ -507,12 +511,19 @@ def list_opportunities(
             Opportunity.deadline_at <= datetime.now(UTC) + timedelta(days=deadline_days),
         )
 
+    count_query = select(func.count(Opportunity.id)).where(query.whereclause) if query.whereclause is not None else select(func.count(Opportunity.id))
+    total = db.scalar(count_query) or 0
+
     query = query.order_by(
         case((Opportunity.deadline_at.is_(None), 1), else_=0),
         Opportunity.deadline_at.asc(),
         Opportunity.created_at.desc(),
     )
-    return list(db.scalars(query).unique().all())
+    if skip > 0:
+        query = query.offset(skip)
+    if limit > 0:
+        query = query.limit(limit)
+    return total, list(db.scalars(query).unique().all())
 
 
 def get_recommended_opportunities(db: Session, user: User) -> list[Opportunity]:

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { clientJsonFetch } from "../lib/client-json";
+import { NoSavedSearchesEmpty } from "./empty-state";
 import type { SavedSearch } from "../lib/types";
 
 function buildHref(item: SavedSearch) {
@@ -25,11 +26,7 @@ export function SavedSearchesPanel({ items }: { items: SavedSearch[] }) {
   const [isPending, startTransition] = useTransition();
 
   if (items.length === 0) {
-    return (
-      <div className="rounded-3xl border border-teal/10 bg-white/90 p-6 text-sm text-slate">
-        Save a search from the opportunities feed to quickly reopen your favorite filters here.
-      </div>
-    );
+    return <NoSavedSearchesEmpty />;
   }
 
   return (

@@ -6,6 +6,7 @@ import { AppHeader } from "../../components/app-header";
 import { AuthEntryPanel } from "../../components/auth-entry-panel";
 import { ProfileCompletionCard } from "../../components/profile-completion-card";
 import { SavedSearchesPanel } from "../../components/saved-searches-panel";
+import { NoApplicationsEmpty, NoSavedSearchesEmpty, LoadingError } from "../../components/empty-state";
 import {
   getApplications,
   getNotifications,
@@ -67,12 +68,11 @@ export default async function DashboardPage() {
     return (
       <main className="page-shell">
         <section className="glass-panel rounded-[32px] p-8 shadow-glow">
-          <p className="text-xs uppercase tracking-[0.3em] text-teal">Dashboard</p>
-          <h1 className="mt-3 text-3xl font-semibold text-ink">The backend is not reachable yet.</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate">
-            The backend may still be waking up, or the session may need to be refreshed. Once the API responds, this
-            page should populate immediately.
-          </p>
+          <LoadingError
+            title="The backend is not reachable yet"
+            description="The backend may still be waking up, or the session may need to be refreshed. Once the API responds, this page should populate immediately."
+            onRetry={() => window.location.reload()}
+          />
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist">
               Back to landing
@@ -130,9 +130,7 @@ export default async function DashboardPage() {
                 </Link>
               </div>
               {applications.length === 0 ? (
-                <div className="rounded-3xl border border-teal/10 bg-white/90 p-6 text-sm text-slate">
-                  Your tracker is empty. Save one opportunity from the feed to start building your pipeline.
-                </div>
+                <NoApplicationsEmpty />
               ) : (
                 <ApplicationKanbanBoard items={applications} />
               )}

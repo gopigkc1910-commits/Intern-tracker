@@ -26,10 +26,12 @@ def list_opportunities(
     deadline_days: int | None = Query(default=None),
     paid_only: bool = Query(default=False),
     min_stipend: float | None = Query(default=None),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, gt=0, le=100),
     db: Session = Depends(get_db),
 ) -> OpportunityListResponse:
     if use_demo_store():
-        items = DEMO_STORE.list_opportunities(
+        total, items = DEMO_STORE.list_opportunities(
             search=search,
             opportunity_type=type,
             mode=mode,
@@ -37,19 +39,32 @@ def list_opportunities(
             deadline_days=deadline_days,
             paid_only=paid_only,
             min_stipend=min_stipend,
+            skip=skip,
+            limit=limit,
         )
-        return OpportunityListResponse(items=items)
-    items = fetch_opportunities(
-        db,
-        search=search,
-        opportunity_type=type,
-        mode=mode,
-        verified_only=verified,
-        deadline_days=deadline_days,
-        paid_only=paid_only,
-        min_stipend=min_stipend,
+    else:
+        total, opp_items = fetch_opportunities(
+            db,
+            search=search,
+            opportunity_type=type,
+            mode=mode,
+            verified_only=verified,
+            deadline_days=deadline_days,
+            paid_only=paid_only,
+            min_stipend=min_stipend,
+            skip=skip,
+            limit=limit,
+        )
+        items = [to_opportunity_summary(item) for item in opp_items]
+
+    from app.schemas import PaginationMetadata
+    metadata = PaginationMetadata(
+        total=total,
+        page=(skip // limit) + 1,
+        page_size=limit,
+        has_next_page=(skip + limit) < total
     )
-    return OpportunityListResponse(items=[to_opportunity_summary(item) for item in items])
+    return OpportunityListResponse(items=items, metadata=metadata)
 
 
 @router.get("/opportunities/recommended", response_model=OpportunityListResponse)

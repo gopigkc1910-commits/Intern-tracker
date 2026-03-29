@@ -1,16 +1,17 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["class", '[data-theme="dark"]'],
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        ink: "#0d1b1e",
-        mist: "#eef6f2",
-        mint: "#9fe3c3",
-        teal: "#1d7f74",
-        coral: "#ff7a59",
-        slate: "#3d4f58"
+        ink: "var(--ink)",
+        mist: "var(--mist)",
+        mint: "var(--mint)",
+        teal: "var(--teal)",
+        coral: "var(--coral)",
+        slate: "var(--slate)"
       },
       fontFamily: {
         sans: ["Poppins", "ui-sans-serif", "system-ui"]

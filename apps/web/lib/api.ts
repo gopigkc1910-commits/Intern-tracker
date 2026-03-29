@@ -8,6 +8,7 @@ import type {
   NotificationItem,
   OpportunityDetail,
   OpportunitySummary,
+  OpportunityListResponse,
   RequestOtpResponse,
   SavedSearch,
   ThreadItem,
@@ -108,7 +109,9 @@ export async function listOpportunities(params?: {
   deadline_days?: string;
   paid_only?: string;
   min_stipend?: string;
-}): Promise<OpportunitySummary[]> {
+  skip?: number;
+  limit?: number;
+}): Promise<OpportunityListResponse> {
   const query = new URLSearchParams();
   if (params?.search) query.set("search", params.search);
   if (params?.type) query.set("type", params.type);
@@ -117,9 +120,10 @@ export async function listOpportunities(params?: {
   if (params?.deadline_days) query.set("deadline_days", params.deadline_days);
   if (params?.paid_only) query.set("paid_only", params.paid_only);
   if (params?.min_stipend) query.set("min_stipend", params.min_stipend);
+  if (params?.skip !== undefined) query.set("skip", params.skip.toString());
+  if (params?.limit !== undefined) query.set("limit", params.limit.toString());
   const suffix = query.toString() ? `?${query.toString()}` : "";
-  const response = await apiFetch<{ items: OpportunitySummary[] }>(`/opportunities${suffix}`);
-  return response.items;
+  return apiFetch<OpportunityListResponse>(`/opportunities${suffix}`);
 }
 
 export async function getOpportunity(slug: string): Promise<OpportunityDetail> {

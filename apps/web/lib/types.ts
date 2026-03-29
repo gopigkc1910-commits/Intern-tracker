@@ -14,6 +14,18 @@ export type OpportunitySummary = {
   description: string;
 };
 
+export type PaginationMetadata = {
+  total: number;
+  page: number;
+  page_size: number;
+  has_next_page: boolean;
+};
+
+export type OpportunityListResponse = {
+  items: OpportunitySummary[];
+  metadata: PaginationMetadata | null;
+};
+
 export type OpportunityDetail = OpportunitySummary & {
   application_url: string;
   eligibility_text: string | null;

@@ -4,5 +4,6 @@
     "Git Bash": {
       "path": "C:\\Program Files\\Git\\bin\\bash.exe"
     }
-  }
+  },
+  "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }

@@ -289,7 +289,9 @@ class DemoStore:
         deadline_days: int | None = None,
         paid_only: bool = False,
         min_stipend: float | None = None,
-    ) -> list[OpportunitySummary]:
+        skip: int = 0,
+        limit: int = 20,
+    ) -> tuple[int, list[OpportunitySummary]]:
         items = self.opportunities
         if search:
             term = search.lower()
@@ -320,7 +322,8 @@ class DemoStore:
             cutoff = datetime.now(UTC) + timedelta(days=deadline_days)
             items = [item for item in items if item.deadline_at is not None and item.deadline_at <= cutoff]
         items = sorted(items, key=lambda item: item.deadline_at or datetime.max.replace(tzinfo=UTC))
-        return [self.to_summary(item) for item in items]
+        total = len(items)
+        return total, [self.to_summary(item) for item in items[skip : skip + limit]]
 
     def get_opportunity(self, slug: str) -> OpportunityDetail | None:
         for item in self.opportunities:

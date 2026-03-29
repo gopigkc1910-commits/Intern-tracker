@@ -33,8 +33,16 @@ class OpportunityDetail(OpportunitySummary):
     currency: str | None = None
 
 
+class PaginationMetadata(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    has_next_page: bool
+
+
 class OpportunityListResponse(BaseModel):
     items: list[OpportunitySummary]
+    metadata: PaginationMetadata | None = None
 
 
 class ApplicationRecord(BaseModel):

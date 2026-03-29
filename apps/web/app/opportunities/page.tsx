@@ -4,6 +4,7 @@ import { AppSidebarShell } from "../../components/app-sidebar-shell";
 import { AppHeader } from "../../components/app-header";
 import { CompareToggleButton } from "../../components/compare-toggle-button";
 import { SaveSearchButton } from "../../components/save-search-button";
+import { NoOpportunitiesEmpty, LoadingError } from "../../components/empty-state";
 import { getProfile, listOpportunities } from "../../lib/api";
 import { getServerAuthToken } from "../../lib/session";
 import type { OpportunitySummary, UserProfile } from "../../lib/types";
@@ -19,6 +20,8 @@ type OpportunitiesPageProps = {
     deadline_days?: string;
     paid_only?: string;
     min_stipend?: string;
+    skip?: string;
+    limit?: string;
   };
 };
 
@@ -45,13 +48,17 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   const showAdminLink = Boolean(process.env.INTERN_TRACKER_ADMIN_TOKEN);
   let profile: UserProfile | null = null;
   let items: OpportunitySummary[] = [];
+  let metadata = null;
   let error = false;
 
   try {
-    [items, profile] = await Promise.all([
+    const [oppResponse, fetchedProfile] = await Promise.all([
       listOpportunities(currentFilters),
       token ? getProfile(token).catch(() => null) : Promise.resolve(null)
     ]);
+    items = oppResponse.items;
+    metadata = oppResponse.metadata;
+    profile = fetchedProfile;
   } catch {
     error = true;
   }
@@ -175,12 +182,16 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
         </form>
 
         {error ? (
-          <div className="mt-8 rounded-3xl border border-coral/20 bg-white/90 p-6 text-sm text-slate">
-            Could not load opportunities. Start the API and database, then refresh this page.
+          <div className="mt-8">
+            <LoadingError
+              title="Could not load opportunities"
+              description="Start the API and database, then refresh this page."
+              onRetry={() => window.location.reload()}
+            />
           </div>
         ) : items.length === 0 ? (
-          <div className="mt-8 rounded-3xl border border-teal/10 bg-white/90 p-6 text-sm text-slate">
-            No opportunities match the current filters yet. Try a broader keyword or reset the filters.
+          <div className="mt-8">
+            <NoOpportunitiesEmpty />
           </div>
         ) : (
           <>
@@ -230,9 +241,51 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
               </article>
             ))}
             </div>
+            
+            {metadata && (metadata.page > 1 || metadata.has_next_page) ? (() => {
+              const buildPageUrl = (newSkip: number) => {
+                const params = new URLSearchParams();
+                for (const [k, v] of Object.entries(currentFilters)) {
+                  if (v !== undefined && v !== null && k !== "skip" && k !== "limit") {
+                    params.set(k, String(v));
+                  }
+                }
+                params.set("skip", newSkip.toString());
+                return `/opportunities?${params.toString()}`;
+              };
+              return (
+                <div className="mt-10 flex items-center justify-between border-t border-teal/10 pt-6 text-sm">
+                  <div>
+                    <p className="text-slate">
+                      Page {metadata.page} of {Math.ceil(metadata.total / metadata.page_size)} <span className="text-teal/40">|</span> {metadata.total} total matches
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {metadata.page > 1 ? (
+                      <Link
+                        href={buildPageUrl((metadata.page - 2) * metadata.page_size)}
+                        className="rounded-full border border-teal/20 px-4 py-2 font-medium text-ink hover:bg-teal/5 transition"
+                      >
+                        Previous
+                      </Link>
+                    ) : null}
+                    {metadata.has_next_page ? (
+                      <Link
+                        href={buildPageUrl(metadata.page * metadata.page_size)}
+                        className="rounded-full border border-teal/20 px-4 py-2 font-medium text-ink hover:bg-teal/5 transition"
+                      >
+                        Next
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })() : null}
+            
           </>
         )}
       </section>
     </AppSidebarShell>
   );
 }
+
