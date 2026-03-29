@@ -51,12 +51,19 @@ def send_gmail_otp(to_email: str, code: str):
     msg["To"] = to_email
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        # Use Port 587 with STARTTLS (more robust against cloud provider port blocking)
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
+            server.set_debuglevel(1)  # Print detailed SMTP logs
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
             server.login(sender_email, sender_password)
             server.send_message(msg)
             print(f"System: Successfully dispatched live OTP to {to_email}")
+    except smtplib.SMTPAuthenticationError:
+        print("System: Gmail Authentication Failed! Ensure you created a 16-character 'App Password' from Google Account settings, NOT your normal password.")
     except Exception as e:
-        print(f"System: Failed to send email to {to_email}: {e}")
+        print(f"System: Failed to send email to {to_email}. Error details: {e}")
 
 @router.get("/auth/providers", response_model=AuthProvidersResponse)
 def list_auth_providers() -> AuthProvidersResponse:
@@ -82,7 +89,6 @@ def list_auth_providers() -> AuthProvidersResponse:
             ),
         ]
     )
-
 
 @router.post("/auth/request-otp", response_model=RequestOtpResponse)
 def request_otp(payload: RequestOtpRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> RequestOtpResponse:
@@ -164,7 +170,7 @@ def request_otp(payload: RequestOtpRequest, background_tasks: BackgroundTasks, d
         message=f"A one-time code has been prepared for your {channel}.",
         channel=channel,
         target_hint=mask_identifier(email=email, phone=phone),
-        development_code=code, # Always return code for now since SMTP isn't configured
+        development_code=code if settings.auth_debug else None,
     )
 
 @router.get("/auth/google/login")
