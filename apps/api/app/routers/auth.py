@@ -114,6 +114,12 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
 
     channel = "email" if email else "phone"
     code = "000000" if settings.auth_debug else f"{secrets.randbelow(1000000):06d}"
+    
+    # Print the OTP to the terminal so the developer can see it locally
+    print(f"==================================================")
+    print(f"OTP CODE FOR {identifier}: {code}")
+    print(f"==================================================")
+
     challenge = AuthChallenge(
         email=email,
         phone=phone,
@@ -131,8 +137,18 @@ def request_otp(payload: RequestOtpRequest, db: Session = Depends(get_db)) -> Re
         message=f"A one-time code has been prepared for your {channel}.",
         channel=channel,
         target_hint=mask_identifier(email=email, phone=phone),
-        development_code=code if settings.auth_debug else None,
+        development_code=code, # Always return code for now since SMTP isn't configured
     )
+
+@router.get("/auth/google/login")
+def google_login_redirect():
+    """Placeholder for Google OAuth Redirect"""
+    raise HTTPException(status_code=501, detail="Google OAuth is not configured on the backend yet. Add an Auth0 or Google Developer Console client architecture here.")
+
+@router.get("/auth/github/login")
+def github_login_redirect():
+    """Placeholder for GitHub OAuth Redirect"""
+    raise HTTPException(status_code=501, detail="GitHub OAuth is not configured on the backend yet. Add an Auth0 or GitHub Developer Console client architecture here.")
 
 
 @router.post("/auth/verify-otp", response_model=AuthResponse)
