@@ -63,9 +63,6 @@ export function AuthEntryPanel({ redirectTo = "/dashboard", className = "" }: Au
             Continue with {item}
           </button>
         ))}
-        <Link href="/opportunities" className="rounded-full border border-teal/20 px-4 py-2 text-sm text-teal">
-          Continue as guest
-        </Link>
       </div>
 
       <div className="mt-5 grid gap-4">
