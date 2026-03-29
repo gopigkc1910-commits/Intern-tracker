@@ -468,6 +468,7 @@ def list_opportunities(
     deadline_days: int | None = None,
     paid_only: bool = False,
     min_stipend: float | None = None,
+    sort_by: str = "relevance",
     skip: int = 0,
     limit: int = 20,
 ) -> tuple[int, list[Opportunity]]:
@@ -514,11 +515,24 @@ def list_opportunities(
     count_query = select(func.count(Opportunity.id)).where(query.whereclause) if query.whereclause is not None else select(func.count(Opportunity.id))
     total = db.scalar(count_query) or 0
 
-    query = query.order_by(
-        case((Opportunity.deadline_at.is_(None), 1), else_=0),
-        Opportunity.deadline_at.asc(),
-        Opportunity.created_at.desc(),
-    )
+    if sort_by == 'deadline_asc':
+        query = query.order_by(
+            case((Opportunity.deadline_at.is_(None), 1), else_=0),
+            Opportunity.deadline_at.asc()
+        )
+    elif sort_by == 'stipend_desc':
+        query = query.order_by(
+            Opportunity.stipend_max.desc().nulls_last()
+        )
+    elif sort_by == 'newest':
+        query = query.order_by(Opportunity.created_at.desc())
+    else: # relevance
+        query = query.order_by(
+            case((Opportunity.deadline_at.is_(None), 1), else_=0),
+            Opportunity.deadline_at.asc(),
+            Opportunity.created_at.desc(),
+        )
+        
     if skip > 0:
         query = query.offset(skip)
     if limit > 0:

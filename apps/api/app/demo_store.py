@@ -289,6 +289,7 @@ class DemoStore:
         deadline_days: int | None = None,
         paid_only: bool = False,
         min_stipend: float | None = None,
+        sort_by: str = "relevance",
         skip: int = 0,
         limit: int = 20,
     ) -> tuple[int, list[OpportunitySummary]]:
@@ -318,10 +319,20 @@ class DemoStore:
                 if (item.stipend_min is not None and item.stipend_min >= min_stipend)
                 or (item.stipend_max is not None and item.stipend_max >= min_stipend)
             ]
+            
         if deadline_days is not None:
             cutoff = datetime.now(UTC) + timedelta(days=deadline_days)
             items = [item for item in items if item.deadline_at is not None and item.deadline_at <= cutoff]
-        items = sorted(items, key=lambda item: item.deadline_at or datetime.max.replace(tzinfo=UTC))
+            
+        if sort_by == 'deadline_asc':
+            items = sorted(items, key=lambda item: item.deadline_at or datetime.max.replace(tzinfo=UTC))
+        elif sort_by == 'stipend_desc':
+            items = sorted(items, key=lambda item: item.stipend_max or -1, reverse=True)
+        elif sort_by == 'newest':
+            pass # In demo store we just leave as default or mock it
+        else: # relevance
+            items = sorted(items, key=lambda item: item.deadline_at or datetime.max.replace(tzinfo=UTC))
+            
         total = len(items)
         return total, [self.to_summary(item) for item in items[skip : skip + limit]]
 

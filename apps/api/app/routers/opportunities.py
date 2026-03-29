@@ -27,6 +27,7 @@ def list_opportunities(
     deadline_days: int | None = Query(default=None),
     paid_only: bool = Query(default=False),
     min_stipend: float | None = Query(default=None),
+    sort_by: str = Query(default="relevance"),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, gt=0, le=100),
     db: Session = Depends(get_db),
@@ -43,6 +44,7 @@ def list_opportunities(
             deadline_days=deadline_days,
             paid_only=paid_only,
             min_stipend=min_stipend,
+            sort_by=sort_by,
             skip=skip,
             limit=limit,
         )
@@ -56,6 +58,7 @@ def list_opportunities(
             deadline_days=deadline_days,
             paid_only=paid_only,
             min_stipend=min_stipend,
+            sort_by=sort_by,
             skip=skip,
             limit=limit,
         )

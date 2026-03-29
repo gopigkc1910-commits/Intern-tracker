@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { clientJsonFetch } from "../lib/client-json";
 import type { ApplicationRecord } from "../lib/types";
+import { ConfirmationModal } from "./ui/confirmation-modal";
 
 const columns = [
   { id: "saved", label: "Saved", accent: "bg-sky-100 text-sky-800" },
@@ -47,6 +48,7 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
   const [message, setMessage] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<DraftState>(() => buildDrafts(items));
   const [isPending, startTransition] = useTransition();
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     setDrafts(buildDrafts(items));
@@ -81,13 +83,16 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
     });
   };
 
-  const removeItem = (applicationId: string) => {
+  const removeItem = () => {
+    if (!itemToDelete) return;
+
     startTransition(async () => {
       try {
-        await clientJsonFetch<{ message: string }>(`/api/applications/${applicationId}`, {
+        await clientJsonFetch<{ message: string }>(`/api/applications/${itemToDelete}`, {
           method: "DELETE"
         });
         setMessage("Application removed from tracker.");
+        setItemToDelete(null);
         router.refresh();
       } catch {
         setMessage("Could not remove that item.");
@@ -111,17 +116,21 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                   No applications here yet.
                 </div>
               ) : (
-                column.items.map((item) => {
+                column.items.map((item, index) => {
                   const currentIndex = columns.findIndex((entry) => entry.id === item.status);
                   const previousStatus = currentIndex > 0 ? columns[currentIndex - 1].id : null;
                   const nextStatus = currentIndex < columns.length - 1 ? columns[currentIndex + 1].id : null;
                   const draft = drafts[item.id] ?? { note: "", next_follow_up_at: "" };
 
                   return (
-                    <article key={item.id} className="rounded-[24px] bg-mist p-4">
+                    <article 
+                      key={item.id} 
+                      className="rounded-[24px] bg-mist p-4 opacity-0 animate-slide-up hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 border border-transparent hover:border-teal/10"
+                      style={{ animationDelay: `${index * 80}ms` }}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-semibold text-ink">{item.opportunity.title}</p>
+                          <p className="font-semibold text-ink leading-tight">{item.opportunity.title}</p>
                           <p className="mt-1 text-sm text-slate">{item.opportunity.organization}</p>
                         </div>
                         <span className="rounded-full bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-teal">
@@ -129,12 +138,12 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                         </span>
                       </div>
 
-                      <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate">
+                      <p className="mt-3 text-[10px] uppercase tracking-[0.16em] text-slate font-medium">
                         {item.opportunity.domain} | {item.opportunity.mode} | deadline {formatDate(item.opportunity.deadline_at)}
                       </p>
 
                       <div className="mt-4 space-y-3">
-                        <label className="grid gap-2 text-xs font-medium uppercase tracking-[0.16em] text-slate">
+                        <label className="grid gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-slate">
                           Notes
                           <textarea
                             value={draft.note}
@@ -147,11 +156,11 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                                 }
                               }))
                             }
-                            className="min-h-24 rounded-2xl border border-teal/10 bg-white px-3 py-2 text-sm text-ink outline-none"
+                            className="min-h-24 rounded-2xl border border-teal/10 bg-white px-3 py-2 text-sm text-ink outline-none transition-shadow focus:shadow-md"
                           />
                         </label>
 
-                        <label className="grid gap-2 text-xs font-medium uppercase tracking-[0.16em] text-slate">
+                        <label className="grid gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-slate">
                           Follow-up
                           <input
                             type="date"
@@ -165,7 +174,7 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                                 }
                               }))
                             }
-                            className="rounded-2xl border border-teal/10 bg-white px-3 py-2 text-sm text-ink outline-none"
+                            className="rounded-2xl border border-teal/10 bg-white px-3 py-2 text-sm text-ink outline-none transition-shadow focus:shadow-md"
                           />
                         </label>
                       </div>
@@ -176,7 +185,7 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                             type="button"
                             disabled={isPending}
                             onClick={() => patchApplication(item.id, { status: previousStatus })}
-                            className="rounded-full border border-teal/20 bg-white px-3 py-2 text-xs font-medium text-teal"
+                            className="rounded-full border border-teal/20 bg-white px-3 py-2 text-xs font-medium text-teal hover:bg-teal/5 transition-colors"
                           >
                             Move back
                           </button>
@@ -186,7 +195,7 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                             type="button"
                             disabled={isPending}
                             onClick={() => patchApplication(item.id, { status: nextStatus })}
-                            className="rounded-full bg-ink px-3 py-2 text-xs font-medium text-mist"
+                            className="rounded-full bg-ink px-3 py-2 text-xs font-medium text-mist hover:scale-105 transition-transform"
                           >
                             Move forward
                           </button>
@@ -200,21 +209,21 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
                               next_follow_up_at: draft.next_follow_up_at ? `${draft.next_follow_up_at}T00:00:00.000Z` : null
                             })
                           }
-                          className="rounded-full border border-ink/10 bg-white px-3 py-2 text-xs font-medium text-ink"
+                          className="rounded-full border border-ink/10 bg-white px-3 py-2 text-xs font-medium text-ink hover:bg-ink/5 transition-colors"
                         >
                           Save card
                         </button>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-3 text-xs font-medium">
-                        <Link href={`/opportunities/${item.opportunity.slug}`} className="text-teal">
+                        <Link href={`/opportunities/${item.opportunity.slug}`} className="text-teal hover:underline transition-colors">
                           Open detail
                         </Link>
                         <button
                           type="button"
                           disabled={isPending}
-                          onClick={() => removeItem(item.id)}
-                          className="text-coral"
+                          onClick={() => setItemToDelete(item.id)}
+                          className="text-coral hover:text-red-600 transition-colors"
                         >
                           Remove
                         </button>
@@ -228,7 +237,17 @@ export function ApplicationKanbanBoard({ items }: { items: ApplicationRecord[] }
         ))}
       </div>
 
-      {message ? <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-slate">{message}</p> : null}
+      {message ? <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-slate animate-slide-up">{message}</p> : null}
+
+      <ConfirmationModal
+        isOpen={itemToDelete !== null}
+        title="Remove Application"
+        description="Are you sure you want to remove this application from your Kanban board?"
+        confirmText="Yes, remove it"
+        onConfirm={removeItem}
+        onCancel={() => setItemToDelete(null)}
+        isPending={isPending}
+      />
     </div>
   );
 }

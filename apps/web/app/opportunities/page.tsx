@@ -20,6 +20,7 @@ type OpportunitiesPageProps = {
     deadline_days?: string;
     paid_only?: string;
     min_stipend?: string;
+    sort_by?: string;
     skip?: string;
     limit?: string;
   };
@@ -37,7 +38,8 @@ function activeFilters(searchParams: OpportunitiesPageProps["searchParams"]) {
     searchParams?.verified === "true" ? "Verified only" : null,
     searchParams?.paid_only === "true" ? "Paid only" : null,
     searchParams?.deadline_days ? `Deadline in ${searchParams.deadline_days} days` : null,
-    searchParams?.min_stipend ? `Min stipend: ${searchParams.min_stipend}` : null
+    searchParams?.min_stipend ? `Min stipend: ${searchParams.min_stipend}` : null,
+    searchParams?.sort_by && searchParams.sort_by !== "relevance" ? `Sorted by: ${searchParams.sort_by}` : null
   ];
   return entries.filter(Boolean) as string[];
 }
@@ -95,12 +97,12 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
               name="search"
               defaultValue={currentFilters.search ?? ""}
               placeholder="Search by role, domain, or location"
-              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none"
+              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none transition-shadow focus:shadow-md"
             />
             <select
               name="type"
               defaultValue={currentFilters.type ?? ""}
-              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none"
+              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none transition-shadow focus:shadow-md"
             >
               <option value="">All types</option>
               <option value="internship">Internship</option>
@@ -111,23 +113,34 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
             <select
               name="mode"
               defaultValue={currentFilters.mode ?? ""}
-              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none"
+              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none transition-shadow focus:shadow-md"
             >
               <option value="">All modes</option>
               <option value="Remote">Remote</option>
               <option value="Hybrid">Hybrid</option>
               <option value="Onsite">Onsite</option>
             </select>
-            <button type="submit" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist">
+            <button type="submit" className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-mist hover:-translate-y-0.5 hover:shadow-lg transition-all">
               Apply Filters
             </button>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-4">
+          <div className="mt-4 grid gap-4 md:grid-cols-5">
+            <select
+              name="sort_by"
+              defaultValue={currentFilters.sort_by ?? "relevance"}
+              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none transition-shadow focus:shadow-md"
+            >
+              <option value="relevance">Sort by Relevance</option>
+              <option value="deadline_asc">Closing Soon</option>
+              <option value="stipend_desc">Highest Stipend</option>
+              <option value="newest">Newly Added</option>
+            </select>
+
             <select
               name="deadline_days"
               defaultValue={currentFilters.deadline_days ?? ""}
-              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none"
+              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none transition-shadow focus:shadow-md"
             >
               <option value="">Any deadline</option>
               <option value="7">Within 7 days</option>
@@ -141,10 +154,10 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
               min="0"
               defaultValue={currentFilters.min_stipend ?? ""}
               placeholder="Minimum stipend"
-              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none"
+              className="rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm outline-none transition-shadow focus:shadow-md"
             />
 
-            <label className="flex items-center gap-3 rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink">
+            <label className="flex items-center gap-3 rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink cursor-pointer hover:bg-teal/5 transition-colors">
               <input
                 type="checkbox"
                 name="verified"
@@ -154,7 +167,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
               Verified only
             </label>
 
-            <label className="flex items-center gap-3 rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink">
+            <label className="flex items-center gap-3 rounded-2xl border border-teal/15 bg-mist px-4 py-3 text-sm text-ink cursor-pointer hover:bg-teal/5 transition-colors">
               <input
                 type="checkbox"
                 name="paid_only"
@@ -172,7 +185,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
                   {chip}
                 </span>
               ))}
-              <Link href="/opportunities" className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-mist">
+              <Link href="/opportunities" className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-mist hover:bg-slate transition-colors">
                 Clear all
               </Link>
             </div>
@@ -200,8 +213,12 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
               <p>Open a detail page to save or apply.</p>
             </div>
             <div className="mt-4 grid gap-5">
-            {items.map((item) => (
-              <article key={item.id} className="rounded-[28px] border border-white/60 bg-white/90 p-5 shadow-glow">
+            {items.map((item, index) => (
+              <article 
+                key={item.id} 
+                className="rounded-[28px] border border-white/60 bg-white/90 p-5 shadow-glow opacity-0 animate-slide-up hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+                style={{ animationDelay: `${index * 60}ms` }}
+              >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em] text-teal">
@@ -224,7 +241,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-3xl bg-mist p-4 text-sm text-slate">
+                  <div className="rounded-3xl bg-mist p-4 text-sm text-slate border border-teal/5">
                     <p className="font-medium text-ink">Deadline</p>
                     <p className="mt-1">{deadlineLabel(item.deadline_at)}</p>
                     <div className="mt-4">
@@ -232,7 +249,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
                     </div>
                     <Link
                       href={`/opportunities/${item.slug}`}
-                      className="mt-4 inline-flex rounded-full bg-ink px-4 py-2 text-sm font-medium text-mist"
+                      className="mt-4 inline-flex w-full justify-center rounded-full bg-ink px-4 py-2 text-sm font-medium text-mist hover:scale-105 transition-transform"
                     >
                       View Details
                     </Link>
@@ -263,7 +280,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
                   <div className="flex items-center gap-3">
                     {metadata.page > 1 ? (
                       <Link
-                        href={buildPageUrl((metadata.page - 2) * metadata.page_size)}
+                         href={buildPageUrl((metadata.page - 2) * metadata.page_size)}
                         className="rounded-full border border-teal/20 px-4 py-2 font-medium text-ink hover:bg-teal/5 transition"
                       >
                         Previous
@@ -271,7 +288,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
                     ) : null}
                     {metadata.has_next_page ? (
                       <Link
-                        href={buildPageUrl(metadata.page * metadata.page_size)}
+                         href={buildPageUrl(metadata.page * metadata.page_size)}
                         className="rounded-full border border-teal/20 px-4 py-2 font-medium text-ink hover:bg-teal/5 transition"
                       >
                         Next
