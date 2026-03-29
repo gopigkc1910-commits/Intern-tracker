@@ -54,8 +54,13 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   let error = false;
 
   try {
+    const apiParams = {
+      ...currentFilters,
+      skip: currentFilters.skip ? parseInt(currentFilters.skip, 10) : undefined,
+      limit: currentFilters.limit ? parseInt(currentFilters.limit, 10) : undefined,
+    };
     const [oppResponse, fetchedProfile] = await Promise.all([
-      listOpportunities(currentFilters),
+      listOpportunities(apiParams),
       token ? getProfile(token).catch(() => null) : Promise.resolve(null)
     ]);
     items = oppResponse.items;

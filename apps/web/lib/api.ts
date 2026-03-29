@@ -109,6 +109,7 @@ export async function listOpportunities(params?: {
   deadline_days?: string;
   paid_only?: string;
   min_stipend?: string;
+  sort_by?: string;
   skip?: number;
   limit?: number;
 }): Promise<OpportunityListResponse> {
@@ -120,6 +121,7 @@ export async function listOpportunities(params?: {
   if (params?.deadline_days) query.set("deadline_days", params.deadline_days);
   if (params?.paid_only) query.set("paid_only", params.paid_only);
   if (params?.min_stipend) query.set("min_stipend", params.min_stipend);
+  if (params?.sort_by) query.set("sort_by", params.sort_by);
   if (params?.skip !== undefined) query.set("skip", params.skip.toString());
   if (params?.limit !== undefined) query.set("limit", params.limit.toString());
   const suffix = query.toString() ? `?${query.toString()}` : "";
