@@ -51,7 +51,7 @@ app = FastAPI(
 # Security: Restrict hosts (if configured)
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=settings.cors_allowed_origins.split(",") if settings.cors_allowed_origins else ["*"]
+    allowed_hosts=["*"]
 )
 
 # Configure CORS with restrictions
