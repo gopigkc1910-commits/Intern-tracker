@@ -20,9 +20,8 @@ class Settings(BaseSettings):
     github_oauth_url: str | None = None
     linkedin_oauth_url: str | None = None
     
-    # Email settings for OTP
-    gmail_address: str | None = None
-    gmail_app_password: str | None = None
+    # Email settings for OTP (HTTP API)
+    resend_api_key: str | None = None
     
     # Security settings
     secure_cookies: bool = True  # Use Secure flag on cookies (only for HTTPS)

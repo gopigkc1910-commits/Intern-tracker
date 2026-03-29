@@ -1,6 +1,7 @@
+import json
 import secrets
-import smtplib
-from email.message import EmailMessage
+import urllib.request
+import urllib.error
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status, BackgroundTasks
@@ -36,34 +37,35 @@ from app.audit_log import log_auth_event
 
 router = APIRouter(tags=["auth"])
 
-def send_gmail_otp(to_email: str, code: str):
-    sender_email = settings.gmail_address
-    sender_password = settings.gmail_app_password
+def send_resend_otp(to_email: str, code: str):
+    api_key = settings.resend_api_key
     
-    if not sender_email or not sender_password:
-        print("Notice: GMAIL_ADDRESS or GMAIL_APP_PASSWORD missing. Real emails skipped.")
+    if not api_key:
+        print("Notice: INTERN_TRACKER_RESEND_API_KEY missing. Real emails skipped.")
         return
 
-    msg = EmailMessage()
-    msg.set_content(f"Your one-time login code for Intern Tracker is:\n\n{code}\n\nThis code will expire in {settings.auth_otp_ttl_minutes} minutes.")
-    msg["Subject"] = "Your Intern Tracker Login Code"
-    msg["From"] = f"Intern Tracker <{sender_email}>"
-    msg["To"] = to_email
-
+    payload = {
+        "from": "Intern Tracker <onboarding@resend.dev>",
+        "to": [to_email],
+        "subject": "Your Intern Tracker Login Code",
+        "html": f"<p>Your one-time login code for Intern Tracker is: <strong>{code}</strong></p><p>This code will expire in {settings.auth_otp_ttl_minutes} minutes.</p>"
+    }
+    
+    # Send HTTP POST to api.resend.com via urllib to bypass SMTP firewalls completely
+    req = urllib.request.Request("https://api.resend.com/emails", data=json.dumps(payload).encode("utf-8"))
+    req.add_header("Authorization", f"Bearer {api_key}")
+    req.add_header("Content-Type", "application/json")
+    
     try:
-        # Use Port 587 with STARTTLS (more robust against cloud provider port blocking)
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
-            server.set_debuglevel(1)  # Print detailed SMTP logs
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
-            print(f"System: Successfully dispatched live OTP to {to_email}")
-    except smtplib.SMTPAuthenticationError:
-        print("System: Gmail Authentication Failed! Ensure you created a 16-character 'App Password' from Google Account settings, NOT your normal password.")
+        response = urllib.request.urlopen(req, timeout=10)
+        print(f"System: Successfully dispatched live HTTP OTP via Resend to {to_email} (Code: {response.getcode()})")
+    except urllib.error.HTTPError as e:
+        error_info = e.read().decode('utf-8')
+        print(f"System: Resend HTTP Error! {e.code} API Rejected the request. Details: {error_info}")
+        if e.code == 403:
+             print("System: 403 Forbidden - Ensure you are sending the email to the exact address you registered at resend.com with!")
     except Exception as e:
-        print(f"System: Failed to send email to {to_email}. Error details: {e}")
+        print(f"System: Failed to connect to Resend HTTP API. Error details: {e}")
 
 @router.get("/auth/providers", response_model=AuthProvidersResponse)
 def list_auth_providers() -> AuthProvidersResponse:
@@ -151,7 +153,7 @@ def request_otp(payload: RequestOtpRequest, background_tasks: BackgroundTasks, d
 
     # Immediately fire off actual email processing in the background!
     if email:
-        background_tasks.add_task(send_gmail_otp, email, code)
+        background_tasks.add_task(send_resend_otp, email, code)
 
     challenge = AuthChallenge(
         email=email,
