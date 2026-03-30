@@ -3,39 +3,39 @@
 @tailwind utilities;
 
 :root {
-  --bg-start: #f7fbf9;
-  --bg-end: #eef6f2;
-  --surface: rgba(255, 255, 255, 0.78);
-  --surface-strong: rgba(255, 255, 255, 0.92);
-  --ink: #0d1b1e;
-  --muted: #506367;
-  --grid: rgba(13, 27, 30, 0.04);
-  --selection: rgba(29, 127, 116, 0.18);
+  --bg-start: #f8fafc;
+  --bg-end: #f1f5f9;
+  --surface: rgba(255, 255, 255, 0.6);
+  --surface-strong: rgba(255, 255, 255, 0.95);
+  --ink: #0f172a;
+  --muted: #64748b;
+  --grid: rgba(15, 23, 42, 0.03);
+  --selection: rgba(16, 185, 129, 0.15);
   
-  --mist: #eef6f2;
-  --mint: #9fe3c3;
-  --teal: #1d7f74;
-  --coral: #ff7a59;
-  --slate: #3d4f58;
+  --mist: rgba(255, 255, 255, 0.85);
+  --mint: #34d399;
+  --teal: #059669;
+  --coral: #e11d48;
+  --slate: #475569;
   
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg-start: #071318;
-  --bg-end: #0e1c24;
-  --surface: rgba(11, 24, 31, 0.78);
-  --surface-strong: rgba(12, 26, 34, 0.92);
-  --ink: #eff8f7;
-  --muted: #a8c1bf;
-  --grid: rgba(239, 248, 247, 0.05);
-  --selection: rgba(86, 201, 185, 0.28);
+  --bg-start: #020617;
+  --bg-end: #0f172a;
+  --surface: rgba(15, 23, 42, 0.5);
+  --surface-strong: rgba(30, 41, 59, 0.85);
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --grid: rgba(248, 250, 252, 0.04);
+  --selection: rgba(52, 211, 153, 0.25);
   
-  --mist: #0e1c24;
-  --mint: #256650;
-  --teal: #56c9b9;
-  --coral: #ff9176;
-  --slate: #a8c1bf;
+  --mist: rgba(255, 255, 255, 0.06);
+  --mint: #10b981;
+  --teal: #34d399;
+  --coral: #fb7185;
+  --slate: #cbd5e1;
   
   color-scheme: dark;
 }
@@ -269,6 +269,35 @@ button:disabled {
   }
 }
 
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.1), 0 0 20px rgba(16, 185, 129, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), 0 0 40px rgba(16, 185, 129, 0.15);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.1), 0 0 20px rgba(16, 185, 129, 0.05);
+  }
+}
+
 .animate-slide-up {
-  animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: glowPulse 3s infinite ease-in-out;
+}
+
+.input-focus-ring {
+  transition: all 0.2s ease;
+}
+
+.input-focus-ring:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .input-focus-ring:focus {
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
 }
