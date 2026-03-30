@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="primary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Modern App Icon Background (Squircle) -->
+  <rect width="512" height="512" rx="116" fill="url(#primary)" />
+  
+  <!-- Tracking Ring -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="url(#accent)" stroke-width="28" stroke-dasharray="160 50" />
+  <circle cx="256" cy="256" r="140" fill="none" stroke="url(#accent)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 500" stroke-dashoffset="-20" />
+  
+  <!-- "IT" Monogram -->
+  <path d="M190 190 h 20 v 132 h -20 z" fill="#f8fafc" />
+  <path d="M250 190 h 80 v 20 h -30 v 112 h -20 v -112 h -30 z" fill="#f8fafc" />
+  
+  <!-- Glow effect dot -->
+  <circle cx="200" cy="165" r="12" fill="#14b8a6" />
+</svg>

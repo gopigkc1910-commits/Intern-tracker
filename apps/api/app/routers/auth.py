@@ -172,7 +172,7 @@ def request_otp(payload: RequestOtpRequest, background_tasks: BackgroundTasks, d
         message=f"A one-time code has been prepared for your {channel}.",
         channel=channel,
         target_hint=mask_identifier(email=email, phone=phone),
-        development_code=None,
+        development_code=code if (not settings.resend_api_key or settings.auth_debug) else None,
     )
 
 @router.get("/auth/google/login")
